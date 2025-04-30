@@ -10,7 +10,7 @@ const mysql = require("mysql2");
 //fazer conexao com o banco mysql
 const con = mysql.createConnection({
     host:"127.0.0.1",
-    port:3307,
+    port:3306,
     user:"root",
     password:"",
     database:"sidedb"
@@ -188,63 +188,7 @@ app.get("/listar",(req,res)=>{
             res.status(204).send({msg:`Dados atualizados`,payload:result});
         })
     });
-    ////////////////////////////////////////TABELA-CONTATO//////////////////////////////////////////////////////////////////////////////////////////
-
-
-    // primeira rota para listar os dados do banco
-app.get("/contato/listar",(req,res)=>{
-    //usar o comando select para listar todos os clientes
-     
-        con.query("Select * from contato",(error,result)=>{
-            if(error){
-                res.status(500)
-                .send({erro:`Erro ao tentar listar os contato ${error}`})
-            }
-            res.status(200).send({msg:result});
-        })
-     
-    });
-    //Segunda rota para receber os dados enviados pelo usuario
-    app.post("/contato/cadastrar",(req,res)=>{
-     
-        con.query("insert into contato set ?",req.body,(error,result)=>{
-     
-            if(error){
-                return res.status(500).send({erro:`erro ao tentar cadastrar contato ${error}`})
-            }
-        res.status(201).send({msg:`contato cadastrado`,payload:result});
-        })
-     
-    });
-     
-    //Terceira rota para receber os dados e atualizar
-    app.put("/contato/atualizar/:id",(req,res)=>{
-       
-        con.query("update contato set ? where id=?",[req.body, req.params.id],(error,result)=>{
-     
-            if(error){
-                return res.status(500).send({erro:`erro ao tentar atualizar ${error}`})
-            }
-       
-       
-        res.status(200).send({msg:`Dados atualizados`,payload:result});
-        })
-    });
-     
-    // Quarta rota para receber um id e apagar um dados
-    app.delete("contato/apagar/:id",(req,res)=>{
-     
-     
-        con.query("delete from contato  where id=?",req.params.id,(error,result)=>{
-     
-            if(error){
-                return res.status(500).send({erro:`erro ao tentar deletar ${error}`})
-            }
-            res.status(204).send({msg:`Dados atualizados`,payload:result});
-        })
-    });
-
-
+    
     ///////////////////////////////////////////////////////TABELA-ENDEREÇO/////////////////////////////////////////////////////////////////
 
     // primeira rota para listar os dados do banco
@@ -487,7 +431,7 @@ app.get("/usuario/listar",(req,res)=>{
             if(error){
                 return res.status(500).send({erro:`erro ao tentar cadastrar idoso ${error}`})
             }
-        res.status(201).send({msg:`idoso cadastrado`,payload:result});
+        res.status(201).send({msg:`usuario cadastrado`,payload:result});
         })
      
     });
