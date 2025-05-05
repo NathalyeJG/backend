@@ -5,6 +5,8 @@ const express = require("express");
 //require importa a bibliotecqa
 //importar a biblioiteca mysql
 const mysql = require("mysql2");
+
+const cors = require("cors")
  
  
 //fazer conexao com o banco mysql
@@ -29,6 +31,8 @@ const app = express();
 // ler, gravar,atualizar,deletar, enviar e receber dados em formato JSON
 app.use(express.json());
  
+app.use(cors())
+
 // primeira rota para listar os dados do banco
 app.get("/idoso/listar",(req,res)=>{
 //usar o comando select para listar todos os clientes
