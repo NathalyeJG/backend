@@ -414,10 +414,10 @@ app.get("/receber/listar",(req,res)=>{
     });
     ///////////////////////////////////////////TABELA-USUARIO////////////////////////////////////////////////////////////////////////
 
-    // primeira rota para listar os dados do banco
+
+// primeira rota para listar os dados do banco
 app.get("/usuario/listar",(req,res)=>{
     //usar o comando select para listar todos os clientes
-     
         con.query("Select * from usuario",(error,result)=>{
             if(error){
                 res.status(500)
@@ -427,17 +427,31 @@ app.get("/usuario/listar",(req,res)=>{
         })
      
     });
-    //Segunda rota para receber os dados enviados pelo usuario
-    app.post("/usuario/cadastrar",(req,res)=>{
-     
-        con.query("insert into usuario set ?",req.body,(error,result)=>{
-     
-            if(error){
-                return res.status(500).send({erro:`erro ao tentar cadastrar idoso ${error}`})
+
+    // primeira rota para listar os dados do banco
+    app.post("/usuario/cadastrar", (req, res) => {
+        const { email, nome_usuario } = req.body;
+    
+        // Primeiro, verifica se já existe um usuário com o mesmo email ou nome de usuário
+        const verificarDuplicidade = "SELECT * FROM usuario WHERE email = ? OR nome_usuario = ?";
+        con.query(verificarDuplicidade, [email, nome_usuario], (erro, resultado) => {
+            if (erro) {
+                return res.status(500).send({ erro: `Erro ao verificar duplicidade: ${erro}` });
             }
-        res.status(201).send({msg:`usuario cadastrado`,payload:result});
-        })
-     
+    
+            if (resultado.length > 0) {
+                return res.status(400).send({ erro: "Já existe um usuário com este e-mail ou nome de usuário." });
+            }
+    
+            // Se não houver duplicidade, prossegue com o cadastro
+            con.query("INSERT INTO usuario SET ?", req.body, (erro, resultado) => {
+                if (erro) {
+                    return res.status(500).send({ erro: `Erro ao cadastrar usuário: ${erro}` });
+                }
+    
+                res.status(201).send({ msg: "Usuário cadastrado com sucesso", payload: resultado });
+            });
+        });
     });
      
     //Terceira rota para receber os dados e atualizar
