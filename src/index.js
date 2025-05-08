@@ -102,7 +102,7 @@ app.get("/agendamento/listar",(req,res)=>{
 //Segunda rota para receber os dados enviados pelo usuario
 app.post("/agendamento/cadastrar",(req,res)=>{
  
-    con.query("insert into gendamentoset ?",req.body,(error,result)=>{
+    con.query("insert into agendamento set ?",req.body,(error,result)=>{
  
         if(error){
             return res.status(500).send({erro:`erro ao tentar cadastrar idoso ${error}`})
@@ -141,27 +141,27 @@ app.delete("/agendamento/apagar/:id",(req,res)=>{
 /////////////////////////////////////////////TABELA-AVALIAÇÃO/////////////////////////////////////////////////////////////////////////////////
 
 // primeira rota para listar os dados do banco
-app.get("/listar",(req,res)=>{
+app.get("/listar/avaliacao",(req,res)=>{
     //usar o comando select para listar todos os clientes
      
-        con.query("Select * from avalicao",(error,result)=>{
+        con.query("Select * from avaliacao",(error,result)=>{
             if(error){
                 res.status(500)
-                .send({erro:`Erro ao tentar listar os avalicao ${error}`})
+                .send({erro:`Erro ao tentar listar os avaliacao ${error}`})
             }
             res.status(200).send({msg:result});
         })
      
     });
     //Segunda rota para receber os dados enviados pelo usuario
-    app.post("/cadastrar",(req,res)=>{
+    app.post("/cadastrar/avaliacao",(req,res)=>{
      
-        con.query("insert into avalicao set ?",req.body,(error,result)=>{
+        con.query("insert into avaliacao set ?",req.body,(error,result)=>{
      
             if(error){
                 return res.status(500).send({erro:`erro ao tentar cadastrar avalicao ${error}`})
             }
-        res.status(201).send({msg:`avalicao cadastrado`,payload:result});
+        res.status(201).send({msg:`avaliacao cadastrado`,payload:result});
         })
      
     });
@@ -169,7 +169,7 @@ app.get("/listar",(req,res)=>{
     //Terceira rota para receber os dados e atualizar
     app.put("/avaliacao/atualizar/:id",(req,res)=>{
        
-        con.query("update avalicao set ? where id=?",[req.body, req.params.id],(error,result)=>{
+        con.query("update avaliacao set ? where id=?",[req.body, req.params.id],(error,result)=>{
      
             if(error){
                 return res.status(500).send({erro:`erro ao tentar atualizar ${error}`})
@@ -184,7 +184,7 @@ app.get("/listar",(req,res)=>{
     app.delete("/avaliacao/apagar/:id",(req,res)=>{
      
      
-        con.query("/avaliacao/delete from avalicao where id=?",req.params.id,(error,result)=>{
+        con.query("/avaliacao/delete from avaliacao where id=?",req.params.id,(error,result)=>{
      
             if(error){
                 return res.status(500).send({erro:`erro ao tentar deletar ${error}`})
@@ -441,6 +441,24 @@ app.get("/receber/listar",(req,res)=>{
 
 
 
+    app.post("/usuario/logar", (req, res) => {
+        const { email, nome_usuario, senha } = req.body;
+    
+        const sql = "SELECT * FROM usuario WHERE (email = ? OR nome_usuario = ?) AND senha = ?";
+        
+        con.query(sql, [email, nome_usuario, senha], (erro, resultado) => {
+            if (erro) {
+                return res.status(500).send({ erro: `Erro ao fazer login: ${erro}` });
+            }
+    
+            if (resultado.length === 0) {
+                return res.status(401).send({ erro: "Email, usuário ou senha incorretos." });
+            }
+    
+            // Aqui deu certo o login
+            res.status(200).send({ msg: "Login realizado com sucesso", usuario: resultado[0] });
+        });
+    });
 
 // primeira rota para listar os dados do banco
 app.get("/usuario/listar",(req,res)=>{
@@ -454,23 +472,12 @@ app.get("/usuario/listar",(req,res)=>{
         })
      
     });
-    //Segunda rota para receber os dados enviados pelo usuario
-    app.post("/usuario/cadastrar",(req,res)=>{
-     
-        con.query("insert into usuario set ?",req.body,(error,result)=>{
-     
-            if(error){
-                return res.status(500).send({erro:`erro ao tentar cadastrar idoso ${error}`})
-            }
-        res.status(201).send({msg:`usuario cadastrado`,payload:result});
-        })
-     
-    });
+
      
     //Terceira rota para receber os dados e atualizar
     app.put("/usuario/atualizar/:id",(req,res)=>{
        
-        con.query("update idoso set ? where id=?",[req.body, req.params.id],(error,result)=>{
+        con.query("update usuario set ? where id=?",[req.body, req.params.id],(error,result)=>{
      
             if(error){
                 return res.status(500).send({erro:`erro ao tentar atualizar ${error}`})
