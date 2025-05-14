@@ -60,12 +60,6 @@ descricao VARCHAR(150) NOT NULL,
 telefone_idoso VARCHAR(14) UNIQUE NOT NULL,
 genero BOOLEAN NOT NULL);
 
-CREATE TABLE avaliacao (
-id_avaliacao int auto_increment primary key,
-id_agendamento int,
-nota decimal (3,2) not null,
-avaliacao varchar(150) not null
-);
 
 -- relacionar a tabela agendamento com a tabela jovem
 ALTER TABLE agendamento
