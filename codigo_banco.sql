@@ -14,14 +14,14 @@ id_agendamento INT AUTO_INCREMENT PRIMARY KEY,
 id_jovem INT NOT NULL,
 id_idoso INT NOT NULL,
 data_hora DATETIME NOT NULL,
-duracao INT NOT NULL,
+duracao INT NOT NULL
 );
  
 CREATE TABLE endereco ( 
 id_endereco INT AUTO_INCREMENT PRIMARY KEY,
 logradouro VARCHAR(20) NOT NULL,
 logradouro_nome VARCHAR(50) NOT NULL,
-numero VARCHAR(10) NOT NULL,
+numero VARCHAR(5) NOT NULL,
 complemento VARCHAR(20),
 cidade VARCHAR(30) NOT NULL,
 estado VARCHAR(20) NOT NULL,
@@ -59,6 +59,13 @@ tipo_comorbidade VARCHAR(50),
 descricao VARCHAR(150) NOT NULL,
 telefone_idoso VARCHAR(14) UNIQUE NOT NULL,
 genero BOOLEAN NOT NULL);
+
+CREATE TABLE avaliacao (
+id_avaliacao int auto_increment primary key,
+id_agendamento int,
+nota decimal (3,2) not null,
+avaliacao varchar(150) not null
+);
 
 
 -- relacionar a tabela agendamento com a tabela jovem
