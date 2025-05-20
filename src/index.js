@@ -48,14 +48,25 @@ app.get("/idoso/listar",(req,res)=>{
 //Segunda rota para receber os dados enviados pelo usuario
 app.post("/idoso/cadastrar",(req,res)=>{
  
-    con.query("insert into idoso set ?",req.body,(error,result)=>{
- 
+    let id_endereco = 0
+    con.query("insert into endereco(logradouro,logradouro_nome,numero,complemento,cidade,estado,bairro,cep,pais)values(?,?,?,?,?,?,?,?,?)",
+        [req.body.logradouro,req.body.logradouro_nome,req.body.numero,req.body.complemento,req.body.cidade,req.body.estado,req.body.bairro,req.body.cep,req.body.pais],(error,result)=>{
+     
         if(error){
-            return res.status(500).send({erro:`erro ao tentar cadastrar idoso ${error}`})
+            return res.status(500).send({erro:`erro ao tentar cadastrar endereco ${error}`})
         }
-    res.status(201).send({msg:`idoso cadastrado`,payload:result});
-    })
+        id_endereco = result.insertId;
+
+  
+     con.query("insert into idoso(id_usuario,id_endereco,foto_idoso,assinante_idoso,cpf,data_nascimento,comorbidade,tipo_comorbidade,descricao,telefone_idoso,genero) values(?,?,?,?,?,?,?,?,?,?,?)",
+        [req.body.id_usuario,id_endereco,req.body.foto_idoso,req.body.assinante_idoso,req.body.cpf,req.body.data_nascimento,req.body.comorbidade,req.body.tipo_comorbidade,req.body.descricao,req.body.telefone_idoso,req.body.genero],(er,rs)=>{
  
+        if(er){
+            return res.status(500).send({erro:`erro ao tentar cadastrar idoso ${er}`})
+        }
+    res.status(201).send({msg:`idoso cadastrado`,payload:rs});
+    })
+})
 });
  
 //Terceira rota para receber os dados e atualizar
