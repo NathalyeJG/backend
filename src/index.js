@@ -274,17 +274,29 @@ app.get("/endereco/listar",(req,res)=>{
      
     });
     //Segunda rota para receber os dados enviados pelo usuario
-    app.post("/jovem/cadastrar",(req,res)=>{
+   app.post("/jovem/cadastrar",(req,res)=>{
+ 
+    let id_endereco = 0
+    con.query("insert into endereco(logradouro,logradouro_nome,numero,complemento,cidade,estado,bairro,cep,pais)values(?,?,?,?,?,?,?,?,?)",
+        [req.body.logradouro,req.body.logradouro_nome,req.body.numero,req.body.complemento,req.body.cidade,req.body.estado,req.body.bairro,req.body.cep,req.body.pais],(error,result)=>{
      
-        con.query("insert into jovem set ?",req.body,(error,result)=>{
-     
-            if(error){
-                return res.status(500).send({erro:`erro ao tentar cadastrar jovem ${error}`})
-            }
-        res.status(201).send({msg:`jovem cadastrado`,payload:result});
-        })
-     
-    });
+        if(error){
+            return res.status(500).send({erro:`erro ao tentar cadastrar endereco ${error}`})
+        }
+        id_endereco = result.insertId;
+
+  
+     con.query("insert into idoso(id_usuario,id_endereco,cpf_jovem,valor_jovem,foto_jovem,assinante_jovem,data_nascimento_jovem,experiencia_jovem,descricao_jovem,telefone_jovem,genero_jovem) values(?,?,?,?,?,?,?,?,?,?,?)",
+        [req.body.id_usuario,id_endereco,req.body.cpf_jovem,req.body.valor_jovem,req.body.foto_jovem,req.body.assinante_jovem,req.body.data_nascimento_jovem,req.body.experiencia_jovem,req.body.descricao_jovem,req.body.telefone_jovem,req.body.genero_jovem],(er,rs)=>{
+ 
+        if(er){
+            return res.status(500).send({erro:`erro ao tentar cadastrar jovem ${er}`})
+        }
+    res.status(201).send({msg:`jovem cadastrado`,payload:rs});
+    })
+})
+});
+ 
      
     //Terceira rota para receber os dados e atualizar
     app.put("/jovem/atualizar/:id",(req,res)=>{

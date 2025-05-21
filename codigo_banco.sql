@@ -35,15 +35,15 @@ CREATE TABLE jovem (
 id_jovem INT AUTO_INCREMENT PRIMARY KEY,
 id_usuario INT NOT NULL,
 id_endereco INT NOT NULL,
-cpf VARCHAR(14) UNIQUE NOT NULL,
+cpf_jovem VARCHAR(14) UNIQUE NOT NULL,
 valor_jovem DECIMAL(4,2),
 foto_jovem varchar(255),
 assinante_jovem BOOLEAN NOT NULL,
-data_nascimento DATE NOT NULL,
-experiencia TEXT,
-descricao VARCHAR(150) NOT NULL,
+data_nascimento_jovem DATE NOT NULL,
+experiencia_jovem TEXT,
+descricao_jovem VARCHAR(150) NOT NULL,
 telefone_jovem VARCHAR(14) UNIQUE NOT NULL,
-genero BOOLEAN NOT NULL);
+genero_jovem BOOLEAN NOT NULL);
 
 
 CREATE TABLE idoso (
