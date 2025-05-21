@@ -96,7 +96,7 @@ ALTER TABLE idoso
 ADD CONSTRAINT `fk_idoso_pk_usuario` 
 FOREIGN KEY idoso(`id_usuario`)
 REFERENCES usuario(`id_usuario`);
--- relacionar a tabela idoso com a tabela endereço
+-- relacionar a tabela idoso com a tabela endereço .
 ALTER TABLE idoso
 ADD CONSTRAINT `fk_idoso_pk_endereco` 
 FOREIGN KEY idoso(`id_endereco`)

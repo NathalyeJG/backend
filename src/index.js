@@ -45,7 +45,7 @@ app.get("/idoso/listar",(req,res)=>{
     })
  
 });
-//Segunda rota para receber os dados enviados pelo usuario
+//Segunda rota para receber os dados enviados pelo usuario.
 app.post("/idoso/cadastrar",(req,res)=>{
  
     let id_endereco = 0
