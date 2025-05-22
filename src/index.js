@@ -10,7 +10,7 @@ const cors = require("cors")
  
  
 //fazer conexao com o banco mysql
-const con = mysql.createConnection({
+const dbConfig = mysql.createConnection({
     host:"127.0.0.1",
     port:3306,
     user:"root",
@@ -36,7 +36,7 @@ app.use(cors())
 // primeira rota para listar os dados do banco
 app.get("/idoso/listar",(req,res)=>{
 //usar o comando select para listar todos os clientes
-    con.query("Select * from idoso",(error,result)=>{
+    dbConfig.query("Select * from idoso",(error,result)=>{
         if(error){
             res.status(500)
             .send({erro:`Erro ao tentar listar os idosos ${error}`})
@@ -49,7 +49,7 @@ app.get("/idoso/listar",(req,res)=>{
 app.post("/idoso/cadastrar",(req,res)=>{
  
     let id_endereco = 0
-    con.query("insert into endereco(logradouro,logradouro_nome,numero,complemento,cidade,estado,bairro,cep,pais)values(?,?,?,?,?,?,?,?,?)",
+    dbConfig.query("insert into endereco(logradouro,logradouro_nome,numero,complemento,cidade,estado,bairro,cep,pais)values(?,?,?,?,?,?,?,?,?)",
         [req.body.logradouro,req.body.logradouro_nome,req.body.numero,req.body.complemento,req.body.cidade,req.body.estado,req.body.bairro,req.body.cep,req.body.pais],(error,result)=>{
      
         if(error){
@@ -58,7 +58,7 @@ app.post("/idoso/cadastrar",(req,res)=>{
         id_endereco = result.insertId;
 
   
-     con.query("insert into idoso(id_usuario,id_endereco,foto_idoso,assinante_idoso,cpf,data_nascimento,comorbidade,tipo_comorbidade,descricao,telefone_idoso,genero) values(?,?,?,?,?,?,?,?,?,?,?)",
+     dbConfig.query("insert into idoso(id_usuario,id_endereco,foto_idoso,assinante_idoso,cpf,data_nascimento,comorbidade,tipo_comorbidade,descricao,telefone_idoso,genero) values(?,?,?,?,?,?,?,?,?,?,?)",
         [req.body.id_usuario,id_endereco,req.body.foto_idoso,req.body.assinante_idoso,req.body.cpf,req.body.data_nascimento,req.body.comorbidade,req.body.tipo_comorbidade,req.body.descricao,req.body.telefone_idoso,req.body.genero],(er,rs)=>{
  
         if(er){
@@ -72,7 +72,7 @@ app.post("/idoso/cadastrar",(req,res)=>{
 //Terceira rota para receber os dados e atualizar
 app.put("/idoso/atualizar/:id",(req,res)=>{
    
-    con.query("update idoso set ? where id=?",[req.body, req.params.id],(error,result)=>{
+    dbConfig.query("update idoso set ? where id=?",[req.body, req.params.id],(error,result)=>{
  
         if(error){
             return res.status(500).send({erro:`erro ao tentar atualizar ${error}`})
@@ -87,7 +87,7 @@ app.put("/idoso/atualizar/:id",(req,res)=>{
 app.delete("/idoso/apagar/:id",(req,res)=>{
  
  
-    con.query("delete from idoso  where id=?",req.params.id,(error,result)=>{
+    dbConfig.query("delete from idoso  where id=?",req.params.id,(error,result)=>{
  
         if(error){
             return res.status(500).send({erro:`erro ao tentar deletar ${error}`})
@@ -101,7 +101,7 @@ app.delete("/idoso/apagar/:id",(req,res)=>{
 app.get("/agendamento/listar",(req,res)=>{
 //usar o comando select para listar todos os clientes
  
-    con.query("Select * from agendamento",(error,result)=>{
+    dbConfig.query("Select * from agendamento",(error,result)=>{
         if(error){
             res.status(500)
             .send({erro:`Erro ao tentar listar os agendamento${error}`})
@@ -113,7 +113,7 @@ app.get("/agendamento/listar",(req,res)=>{
 //Segunda rota para receber os dados enviados pelo usuario
 app.post("/agendamento/cadastrar",(req,res)=>{
  
-    con.query("insert into agendamento set ?",req.body,(error,result)=>{
+    dbConfig.query("insert into agendamento set ?",req.body,(error,result)=>{
  
         if(error){
             return res.status(500).send({erro:`erro ao tentar cadastrar idoso ${error}`})
@@ -126,7 +126,7 @@ app.post("/agendamento/cadastrar",(req,res)=>{
 //Terceira rota para receber os dados e atualizar
 app.put("/agendamento/atualizar/:id",(req,res)=>{
    
-    con.query("update agendamento set ? where id=?",[req.body, req.params.id],(error,result)=>{
+    dbConfig.query("update agendamento set ? where id=?",[req.body, req.params.id],(error,result)=>{
  
         if(error){
             return res.status(500).send({erro:`erro ao tentar atualizar ${error}`})
@@ -141,7 +141,7 @@ app.put("/agendamento/atualizar/:id",(req,res)=>{
 app.delete("/agendamento/apagar/:id",(req,res)=>{
  
  
-    con.query("delete from agendamento  where id=?",req.params.id,(error,result)=>{
+    dbConfig.query("delete from agendamento  where id=?",req.params.id,(error,result)=>{
  
         if(error){
             return res.status(500).send({erro:`erro ao tentar deletar ${error}`})
@@ -155,7 +155,7 @@ app.delete("/agendamento/apagar/:id",(req,res)=>{
 app.get("/listar/avaliacao",(req,res)=>{
     //usar o comando select para listar todos os clientes
      
-        con.query("Select * from avaliacao",(error,result)=>{
+        dbConfig.query("Select * from avaliacao",(error,result)=>{
             if(error){
                 res.status(500)
                 .send({erro:`Erro ao tentar listar os avaliacao ${error}`})
@@ -167,7 +167,7 @@ app.get("/listar/avaliacao",(req,res)=>{
     //Segunda rota para receber os dados enviados pelo usuario
     app.post("/cadastrar/avaliacao",(req,res)=>{
      
-        con.query("insert into avaliacao set ?",req.body,(error,result)=>{
+        dbConfig.query("insert into avaliacao set ?",req.body,(error,result)=>{
      
             if(error){
                 return res.status(500).send({erro:`erro ao tentar cadastrar avalicao ${error}`})
@@ -180,7 +180,7 @@ app.get("/listar/avaliacao",(req,res)=>{
     //Terceira rota para receber os dados e atualizar
     app.put("/avaliacao/atualizar/:id",(req,res)=>{
        
-        con.query("update avaliacao set ? where id=?",[req.body, req.params.id],(error,result)=>{
+        dbConfig.query("update avaliacao set ? where id=?",[req.body, req.params.id],(error,result)=>{
      
             if(error){
                 return res.status(500).send({erro:`erro ao tentar atualizar ${error}`})
@@ -195,7 +195,7 @@ app.get("/listar/avaliacao",(req,res)=>{
     app.delete("/avaliacao/apagar/:id",(req,res)=>{
      
      
-        con.query("/avaliacao/delete from avaliacao where id=?",req.params.id,(error,result)=>{
+        dbConfig.query("/avaliacao/delete from avaliacao where id=?",req.params.id,(error,result)=>{
      
             if(error){
                 return res.status(500).send({erro:`erro ao tentar deletar ${error}`})
@@ -210,7 +210,7 @@ app.get("/listar/avaliacao",(req,res)=>{
 app.get("/endereco/listar",(req,res)=>{
     //usar o comando select para listar todos os clientes
      
-        con.query("Select * from endereco",(error,result)=>{
+        dbConfig.query("Select * from endereco",(error,result)=>{
             if(error){
                 res.status(500)
                 .send({erro:`Erro ao tentar listar os endereco ${error}`})
@@ -222,7 +222,7 @@ app.get("/endereco/listar",(req,res)=>{
     //Segunda rota para receber os dados enviados pelo usuario
     app.post("/endereco/cadastrar",(req,res)=>{
      
-        con.query("insert into endereco set ?",req.body,(error,result)=>{
+        dbConfig.query("insert into endereco set ?",req.body,(error,result)=>{
      
             if(error){
                 return res.status(500).send({erro:`erro ao tentar cadastrar endereco ${error}`})
@@ -235,7 +235,7 @@ app.get("/endereco/listar",(req,res)=>{
     //Terceira rota para receber os dados e atualizar
     app.put("/endereco/atualizar/:id",(req,res)=>{
        
-        con.query("update endereco set ? where id=?",[req.body, req.params.id],(error,result)=>{
+        dbConfig.query("update endereco set ? where id=?",[req.body, req.params.id],(error,result)=>{
      
             if(error){
                 return res.status(500).send({erro:`erro ao tentar atualizar ${error}`})
@@ -250,7 +250,7 @@ app.get("/endereco/listar",(req,res)=>{
     app.delete("endereco/apagar/:id",(req,res)=>{
      
      
-        con.query("delete from endereco where id=?",req.params.id,(error,result)=>{
+        dbConfig.query("delete from endereco where id=?",req.params.id,(error,result)=>{
      
             if(error){
                 return res.status(500).send({erro:`erro ao tentar deletar ${error}`})
@@ -264,7 +264,7 @@ app.get("/endereco/listar",(req,res)=>{
     app.get("/jovem/listar",(req,res)=>{
     //usar o comando select para listar todos os clientes
      
-        con.query("Select * from jovem",(error,result)=>{
+        dbConfig.query("Select * from jovem",(error,result)=>{
             if(error){
                 res.status(500)
                 .send({erro:`Erro ao tentar listar os jovem ${error}`})
@@ -277,7 +277,7 @@ app.get("/endereco/listar",(req,res)=>{
    app.post("/jovem/cadastrar",(req,res)=>{
  
     let id_endereco = 0
-    con.query("insert into endereco(logradouro,logradouro_nome,numero,complemento,cidade,estado,bairro,cep,pais)values(?,?,?,?,?,?,?,?,?)",
+    dbConfig.query("insert into endereco(logradouro,logradouro_nome,numero,complemento,cidade,estado,bairro,cep,pais)values(?,?,?,?,?,?,?,?,?)",
         [req.body.logradouro,req.body.logradouro_nome,req.body.numero,req.body.complemento,req.body.cidade,req.body.estado,req.body.bairro,req.body.cep,req.body.pais],(error,result)=>{
      
         if(error){
@@ -286,7 +286,7 @@ app.get("/endereco/listar",(req,res)=>{
         id_endereco = result.insertId;
 
   
-     con.query("insert into jovem(id_usuario,id_endereco,cpf_jovem,valor_jovem,foto_jovem,assinante_jovem,data_nascimento_jovem,experiencia_jovem,descricao_jovem,telefone_jovem,genero_jovem) values(?,?,?,?,?,?,?,?,?,?,?)",
+     dbConfig.query("insert into jovem(id_usuario,id_endereco,cpf_jovem,valor_jovem,foto_jovem,assinante_jovem,data_nascimento_jovem,experiencia_jovem,descricao_jovem,telefone_jovem,genero_jovem) values(?,?,?,?,?,?,?,?,?,?,?)",
         [req.body.id_usuario,id_endereco,req.body.cpf_jovem,req.body.valor_jovem,req.body.foto_jovem,req.body.assinante_jovem,req.body.data_nascimento_jovem,req.body.experiencia_jovem,req.body.descricao_jovem,req.body.telefone_jovem,req.body.genero_jovem],(er,rs)=>{
  
         if(er){
@@ -301,7 +301,7 @@ app.get("/endereco/listar",(req,res)=>{
     //Terceira rota para receber os dados e atualizar
     app.put("/jovem/atualizar/:id",(req,res)=>{
        
-        con.query("update jovem set ? where id=?",[req.body, req.params.id],(error,result)=>{
+        dbConfig.query("update jovem set ? where id=?",[req.body, req.params.id],(error,result)=>{
      
             if(error){
                 return res.status(500).send({erro:`erro ao tentar atualizar ${error}`})
@@ -316,7 +316,7 @@ app.get("/endereco/listar",(req,res)=>{
     app.delete("/jovem/apagar/:id",(req,res)=>{
      
      
-        con.query("delete from idoso  where id=?",req.params.id,(error,result)=>{
+        dbConfig.query("delete from idoso  where id=?",req.params.id,(error,result)=>{
      
             if(error){
                 return res.status(500).send({erro:`erro ao tentar deletar ${error}`})
@@ -332,7 +332,7 @@ app.get("/endereco/listar",(req,res)=>{
    
         // Primeiro, verifica se já existe um usuário com o mesmo email ou nome de usuário
         const verificarDuplicidade = "SELECT * FROM usuario WHERE email = ? OR nome_usuario = ?";
-        con.query(verificarDuplicidade, [email, nome_usuario], (erro, resultado) => {
+        dbConfig.query(verificarDuplicidade, [email, nome_usuario], (erro, resultado) => {
             if (erro) {
                 return res.status(500).send({ erro: `Erro ao verificar duplicidade: ${erro}` });
             }
@@ -342,7 +342,7 @@ app.get("/endereco/listar",(req,res)=>{
             }
    
             // Se não houver duplicidade, prossegue com o cadastro
-            con.query("INSERT INTO usuario SET ?", req.body, (erro, resultado) => {
+            dbConfig.query("INSERT INTO usuario SET ?", req.body, (erro, resultado) => {
                 if (erro) {
                     return res.status(500).send({ erro: `Erro ao cadastrar usuário: ${erro}` });
                 }
@@ -359,7 +359,7 @@ app.get("/endereco/listar",(req,res)=>{
     
         const sql = "SELECT * FROM usuario WHERE (email = ? OR nome_usuario = ?) AND senha = ?";
         
-        con.query(sql, [email, nome_usuario, senha], (erro, resultado) => {
+        dbConfig.query(sql, [email, nome_usuario, senha], (erro, resultado) => {
             if (erro) {
                 return res.status(500).send({ erro: `Erro ao fazer login: ${erro}` });
             }
@@ -376,7 +376,7 @@ app.get("/endereco/listar",(req,res)=>{
 // primeira rota para listar os dados do banco
 app.get("/usuario/listar",(req,res)=>{
     //usar o comando select para listar todos os clientes
-        con.query("Select * from usuario",(error,result)=>{
+        dbConfig.query("Select * from usuario",(error,result)=>{
             if(error){
                 res.status(500)
                 .send({erro:`Erro ao tentar listar os usuarios ${error}`})
@@ -390,7 +390,7 @@ app.get("/usuario/listar",(req,res)=>{
     //Terceira rota para receber os dados e atualizar
     app.put("/usuario/atualizar/:id",(req,res)=>{
        
-        con.query("update usuario set ? where id=?",[req.body, req.params.id],(error,result)=>{
+        dbConfig.query("update usuario set ? where id=?",[req.body, req.params.id],(error,result)=>{
      
             if(error){
                 return res.status(500).send({erro:`erro ao tentar atualizar ${error}`})
@@ -405,7 +405,7 @@ app.get("/usuario/listar",(req,res)=>{
     app.delete("/usuario/apagar/:id",(req,res)=>{
      
      
-        con.query("delete from usuario  where id=?",req.params.id,(error,result)=>{
+        dbConfig.query("delete from usuario  where id=?",req.params.id,(error,result)=>{
      
             if(error){
                 return res.status(500).send({erro:`erro ao tentar deletar ${error}`})
@@ -418,7 +418,7 @@ app.get("/usuario/listar",(req,res)=>{
 // primeira rota para listar os dados do banco
 app.get("/idoso/listar_pos_cadastro",(req,res)=>{
     //usar o comando select para listar todos os clientes
-        con.query("Select * from idoso order by id_idoso desc limit 0,10",(error,result)=>{
+        dbConfig.query("Select * from idoso order by id_idoso desc limit 0,10",(error,result)=>{
             if(error){
                 res.status(500)
                 .send({erro:`Erro ao tentar listar os idoso ${error}`})
@@ -431,127 +431,133 @@ app.get("/idoso/listar_pos_cadastro",(req,res)=>{
 
 
 
+//     // \\\\\\\\\\\\\\\\\\\\\\\\\\     teste server msg   \\\\\\\\\\\\\\\\\\\\\\
+
+
+// Importa os pacotes necessários
+//const express = require('express');               // Framework web para rotas REST
+//const mysql = require('mysql2/promise');          // Biblioteca para conectar ao MySQL com async/await
+const http = require('http');                     // Módulo nativo do Node para criar o servidor
+const socketio = require('socket.io');            // Biblioteca para WebSockets (tempo real)
+
+
+
+// Cria o servidor HTTP baseado no Express
+const servidorHttp = http.createServer(app);
+
+// Cria o servidor Socket.IO em cima do HTTP
+const io = socketio(servidorHttp, {
+  cors: {
+    origin: "*", // Permite qualquer origem (em produção deve restringir)
+  }
+});
+
+
+
+// Conexão global com o banco
+let conexaoDB;
+
+// Função para conectar ao banco
+async function conectarDB() {
+  conexaoDB = await mysql.createConnection(dbConfig);
+  console.log('✅ Conectado ao banco MySQL');
+}
+conectarDB(); // Executa a conexão assim que o servidor iniciar
+
+// Objeto para mapear usuários online (chave: nome de usuário, valor: socket.id)
+const usuariosOnline = {};
+
+// Evento de conexão do WebSocket
+io.on('connection', (socket) => {
+  console.log('🔌 Novo usuário conectado:', socket.id);
+
+  // Evento para registrar o nome do usuário ao conectar
+  socket.on('registrar_usuario', (nomeUsuario) => {
+    usuariosOnline[nomeUsuario] = socket.id;
+    console.log(`👤 Usuário registrado: ${nomeUsuario}`);
+  });
+
+  // Evento para envio de mensagem privada
+  socket.on('mensagem_privada', async (dados) => {
+    const { remetente, destinatario, mensagem } = dados;
+
+    try {
+      // Insere a mensagem na tabela de mensagens, buscando os IDs dos usuários pelo nome
+      const query = `
+        INSERT INTO mensagens (remetente_id, destinatario_id, conteudo)
+        SELECT r.id_usuario, d.id_usuario, ? 
+        FROM usuario r, usuario d 
+        WHERE r.nome_usuario = ? AND d.nome_usuario = ?
+      `;
+      await conexaoDB.execute(query, [mensagem, remetente, destinatario]);
+
+      // Envia a mensagem ao destinatário se ele estiver online
+      const socketDestinatario = usuariosOnline[destinatario];
+      if (socketDestinatario) {
+        io.to(socketDestinatario).emit('mensagem_recebida', {
+          remetente,
+          mensagem,
+        });
+      }
+    } catch (erro) {
+      console.error('❌ Erro ao salvar ou enviar a mensagem:', erro);
+    }
+  });
+
+  // Evento de desconexão do socket
+  socket.on('disconnect', () => {
+    for (const nome in usuariosOnline) {
+      if (usuariosOnline[nome] === socket.id) {
+        delete usuariosOnline[nome];
+        console.log(`❎ Usuário desconectado: ${nome}`);
+        break;
+      }
+    }
+  });
+});
+
+// Rota para buscar o histórico de mensagens entre dois usuários
+app.get('/historico/:usuario1/:usuario2', async (req, res) => {
+  const { usuario1, usuario2 } = req.params;
+
+  try {
+    const query = `
+      SELECT 
+        u1.nome_usuario AS remetente, 
+        u2.nome_usuario AS destinatario, 
+        m.conteudo, 
+        m.data_envio
+      FROM mensagens m
+      JOIN usuario u1 ON m.remetente_id = u1.id_usuario
+      JOIN usuario u2 ON m.destinatario_id = u2.id_usuario
+      WHERE (u1.nome_usuario = ? AND u2.nome_usuario = ?) 
+         OR (u1.nome_usuario = ? AND u2.nome_usuario = ?)
+      ORDER BY m.data_envio ASC
+    `;
+
+    const [mensagens] = await conexaoDB.execute(query, [usuario1, usuario2, usuario2, usuario1]);
+    res.json(mensagens);
+  } catch (erro) {
+    console.error('❌ Erro ao buscar histórico:', erro);
+    res.status(500).send('Erro ao buscar histórico');
+  }
+});
+
+// Define a porta do servidor
+const PORTA = 3000;
+servidorHttp.listen(PORTA, () => {
+  console.log(`🚀 Servidor rodando na porta ${PORTA}`);
+});
+
+
+
+
+
+
+
+
 
 
 
 app.listen(3000,
     ()=>console.log("Servidor online http://127.0.0.1:3000"))
-
-
-
-
-
-
-//     // \\\\\\\\\\\\\\\\\\\\\\\\\\     teste server msg   \\\\\\\\\\\\\\\\\\\\\\
-//    const WebSocket = require("ws");
-
-// const PORT = 8080;
-
-// // Criar o servidor WebSocket
-// const wss = new WebSocket.Server({ port: PORT });
-
-// console.log(`Servidor WebSocket rodando na porta ${PORT}`);
-
-// // Objeto para guardar conexões ativas:
-// // chave = userId; valor = { socket, userType }
-// const clients = {};
-
-// wss.on("connection", (ws) => {
-//   console.log("Cliente conectado");
-
-//   // Quando o cliente envia uma mensagem
-//   ws.on("message", (data) => {
-//     try {
-//       const msg = JSON.parse(data);
-
-//       // Registro inicial do usuário
-//       if (msg.type === "register") {
-//         // Salva a conexão com userId e userType
-//         clients[msg.userId] = {
-//           socket: ws,
-//           userType: msg.userType
-//         };
-//         // Também guardamos no ws para identificar depois
-//         ws.userId = msg.userId;
-//         ws.userType = msg.userType;
-
-//         console.log(`Usuário ${msg.userId} registrado como tipo ${msg.userType}`);
-
-//         return;
-//       }
-
-//       // Envio de mensagem privada
-//       if (msg.type === "private_message") {
-//         const sender = clients[msg.from];
-//         const receiver = clients[msg.to];
-
-//         // Verificar se ambos estão conectados
-//         if (!sender || !receiver) {
-//           ws.send(JSON.stringify({ type: "error", message: "Usuário não conectado." }));
-//           return;
-//         }
-
-//         // Bloquear conversas entre usuários do mesmo tipo
-//         if (sender.userType === receiver.userType) {
-//           ws.send(JSON.stringify({ type: "error", message: "Você só pode conversar com um usuário do outro tipo." }));
-//           return;
-//         }
-
-//         // Enviar a mensagem para o destinatário
-//         receiver.socket.send(JSON.stringify({
-//           type: "private_message",
-//           from: msg.from,
-//           message: msg.message,
-//         }));
-
-//         // Opcional: pode enviar a confirmação para quem enviou
-//         ws.send(JSON.stringify({ type: "message_sent" }));
-//       }
-
-//     } catch (error) {
-//       console.error("Erro ao processar mensagem:", error);
-//       ws.send(JSON.stringify({ type: "error", message: "Formato de mensagem inválido." }));
-//     }
-//   });
-
-//   ws.on("close", () => {
-//     console.log(`Cliente ${ws.userId} desconectou`);
-//     // Remover da lista clients
-//     if (ws.userId) {
-//       delete clients[ws.userId];
-//     }
-//   });
-
-//   ws.on("error", (error) => {
-//     console.error("WebSocket error:", error);
-//   });
-// });
-
-
-
-//     /////////////////////////////////////////////TESTE-BANCO///////////////////////////////////////////////////////
-
-//    //   "tipo_usuario": 1,
-  
-//  //     "nome_usuario": "dominc",
-  
-//  //     "senha": 12534531,
-  
-//   //    "foto_usuario": link da foto
-// ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-
-
-//    // "id_usuario": ,
-//     //"id_endereco": ,
-//     //"id_contato": ,
-//    // "nome": ,
-//    // "cpf": ,
-//    // "data_nascimento": ,
-//    // "experiencia": ,
-//     //"chave_pix": ,
-//     //"descricao": ,
-//     //"genero": ,
-//     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    
-  
