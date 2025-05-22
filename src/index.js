@@ -286,7 +286,7 @@ app.get("/endereco/listar",(req,res)=>{
         id_endereco = result.insertId;
 
   
-     con.query("insert into idoso(id_usuario,id_endereco,cpf_jovem,valor_jovem,foto_jovem,assinante_jovem,data_nascimento_jovem,experiencia_jovem,descricao_jovem,telefone_jovem,genero_jovem) values(?,?,?,?,?,?,?,?,?,?,?)",
+     con.query("insert into jovem(id_usuario,id_endereco,cpf_jovem,valor_jovem,foto_jovem,assinante_jovem,data_nascimento_jovem,experiencia_jovem,descricao_jovem,telefone_jovem,genero_jovem) values(?,?,?,?,?,?,?,?,?,?,?)",
         [req.body.id_usuario,id_endereco,req.body.cpf_jovem,req.body.valor_jovem,req.body.foto_jovem,req.body.assinante_jovem,req.body.data_nascimento_jovem,req.body.experiencia_jovem,req.body.descricao_jovem,req.body.telefone_jovem,req.body.genero_jovem],(er,rs)=>{
  
         if(er){
@@ -415,121 +415,143 @@ app.get("/usuario/listar",(req,res)=>{
     });
 
 
+// primeira rota para listar os dados do banco
+app.get("/idoso/listar_pos_cadastro",(req,res)=>{
+    //usar o comando select para listar todos os clientes
+        con.query("Select * from idoso order by id_idoso desc limit 0,10",(error,result)=>{
+            if(error){
+                res.status(500)
+                .send({erro:`Erro ao tentar listar os idoso ${error}`})
+            }
+            res.status(200).send({msg:result});
+        })
+     
+    });
+
+
+
+
+
+
+
 app.listen(3000,
     ()=>console.log("Servidor online http://127.0.0.1:3000"))
 
 
 
-    // \\\\\\\\\\\\\\\\\\\\\\\\\\     teste server msg   \\\\\\\\\\\\\\\\\\\\\\
-   const WebSocket = require("ws");
-
-const PORT = 8080;
-
-// Criar o servidor WebSocket
-const wss = new WebSocket.Server({ port: PORT });
-
-console.log(`Servidor WebSocket rodando na porta ${PORT}`);
-
-// Objeto para guardar conexões ativas:
-// chave = userId; valor = { socket, userType }
-const clients = {};
-
-wss.on("connection", (ws) => {
-  console.log("Cliente conectado");
-
-  // Quando o cliente envia uma mensagem
-  ws.on("message", (data) => {
-    try {
-      const msg = JSON.parse(data);
-
-      // Registro inicial do usuário
-      if (msg.type === "register") {
-        // Salva a conexão com userId e userType
-        clients[msg.userId] = {
-          socket: ws,
-          userType: msg.userType
-        };
-        // Também guardamos no ws para identificar depois
-        ws.userId = msg.userId;
-        ws.userType = msg.userType;
-
-        console.log(`Usuário ${msg.userId} registrado como tipo ${msg.userType}`);
-
-        return;
-      }
-
-      // Envio de mensagem privada
-      if (msg.type === "private_message") {
-        const sender = clients[msg.from];
-        const receiver = clients[msg.to];
-
-        // Verificar se ambos estão conectados
-        if (!sender || !receiver) {
-          ws.send(JSON.stringify({ type: "error", message: "Usuário não conectado." }));
-          return;
-        }
-
-        // Bloquear conversas entre usuários do mesmo tipo
-        if (sender.userType === receiver.userType) {
-          ws.send(JSON.stringify({ type: "error", message: "Você só pode conversar com um usuário do outro tipo." }));
-          return;
-        }
-
-        // Enviar a mensagem para o destinatário
-        receiver.socket.send(JSON.stringify({
-          type: "private_message",
-          from: msg.from,
-          message: msg.message,
-        }));
-
-        // Opcional: pode enviar a confirmação para quem enviou
-        ws.send(JSON.stringify({ type: "message_sent" }));
-      }
-
-    } catch (error) {
-      console.error("Erro ao processar mensagem:", error);
-      ws.send(JSON.stringify({ type: "error", message: "Formato de mensagem inválido." }));
-    }
-  });
-
-  ws.on("close", () => {
-    console.log(`Cliente ${ws.userId} desconectou`);
-    // Remover da lista clients
-    if (ws.userId) {
-      delete clients[ws.userId];
-    }
-  });
-
-  ws.on("error", (error) => {
-    console.error("WebSocket error:", error);
-  });
-});
 
 
 
-    /////////////////////////////////////////////TESTE-BANCO///////////////////////////////////////////////////////
+//     // \\\\\\\\\\\\\\\\\\\\\\\\\\     teste server msg   \\\\\\\\\\\\\\\\\\\\\\
+//    const WebSocket = require("ws");
 
-   //   "tipo_usuario": 1,
+// const PORT = 8080;
+
+// // Criar o servidor WebSocket
+// const wss = new WebSocket.Server({ port: PORT });
+
+// console.log(`Servidor WebSocket rodando na porta ${PORT}`);
+
+// // Objeto para guardar conexões ativas:
+// // chave = userId; valor = { socket, userType }
+// const clients = {};
+
+// wss.on("connection", (ws) => {
+//   console.log("Cliente conectado");
+
+//   // Quando o cliente envia uma mensagem
+//   ws.on("message", (data) => {
+//     try {
+//       const msg = JSON.parse(data);
+
+//       // Registro inicial do usuário
+//       if (msg.type === "register") {
+//         // Salva a conexão com userId e userType
+//         clients[msg.userId] = {
+//           socket: ws,
+//           userType: msg.userType
+//         };
+//         // Também guardamos no ws para identificar depois
+//         ws.userId = msg.userId;
+//         ws.userType = msg.userType;
+
+//         console.log(`Usuário ${msg.userId} registrado como tipo ${msg.userType}`);
+
+//         return;
+//       }
+
+//       // Envio de mensagem privada
+//       if (msg.type === "private_message") {
+//         const sender = clients[msg.from];
+//         const receiver = clients[msg.to];
+
+//         // Verificar se ambos estão conectados
+//         if (!sender || !receiver) {
+//           ws.send(JSON.stringify({ type: "error", message: "Usuário não conectado." }));
+//           return;
+//         }
+
+//         // Bloquear conversas entre usuários do mesmo tipo
+//         if (sender.userType === receiver.userType) {
+//           ws.send(JSON.stringify({ type: "error", message: "Você só pode conversar com um usuário do outro tipo." }));
+//           return;
+//         }
+
+//         // Enviar a mensagem para o destinatário
+//         receiver.socket.send(JSON.stringify({
+//           type: "private_message",
+//           from: msg.from,
+//           message: msg.message,
+//         }));
+
+//         // Opcional: pode enviar a confirmação para quem enviou
+//         ws.send(JSON.stringify({ type: "message_sent" }));
+//       }
+
+//     } catch (error) {
+//       console.error("Erro ao processar mensagem:", error);
+//       ws.send(JSON.stringify({ type: "error", message: "Formato de mensagem inválido." }));
+//     }
+//   });
+
+//   ws.on("close", () => {
+//     console.log(`Cliente ${ws.userId} desconectou`);
+//     // Remover da lista clients
+//     if (ws.userId) {
+//       delete clients[ws.userId];
+//     }
+//   });
+
+//   ws.on("error", (error) => {
+//     console.error("WebSocket error:", error);
+//   });
+// });
+
+
+
+//     /////////////////////////////////////////////TESTE-BANCO///////////////////////////////////////////////////////
+
+//    //   "tipo_usuario": 1,
   
- //     "nome_usuario": "dominc",
+//  //     "nome_usuario": "dominc",
   
- //     "senha": 12534531,
+//  //     "senha": 12534531,
   
-  //    "foto_usuario": link da foto
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//   //    "foto_usuario": link da foto
+// ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
 
-   // "id_usuario": ,
-    //"id_endereco": ,
-    //"id_contato": ,
-   // "nome": ,
-   // "cpf": ,
-   // "data_nascimento": ,
-   // "experiencia": ,
-    //"chave_pix": ,
-    //"descricao": ,
-    //"genero": ,
-    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//    // "id_usuario": ,
+//     //"id_endereco": ,
+//     //"id_contato": ,
+//    // "nome": ,
+//    // "cpf": ,
+//    // "data_nascimento": ,
+//    // "experiencia": ,
+//     //"chave_pix": ,
+//     //"descricao": ,
+//     //"genero": ,
+//     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     
   
