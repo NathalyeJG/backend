@@ -421,23 +421,90 @@ app.listen(3000,
 
 
     // \\\\\\\\\\\\\\\\\\\\\\\\\\     teste server msg   \\\\\\\\\\\\\\\\\\\\\\
-    const { WebSocketServer } = require("ws")
-    const dotenv = require("dotenv")
-    
-    dotenv.config()
-    
-    const wss = new WebSocketServer({ port: process.env.PORT || 8080 })
-    
-    wss.on("connection", (ws) => {
-        ws.on("error", console.error)
-    
-        ws.on("message", (data) => {
-            wss.clients.forEach((client) => client.send(data.toString()))
-        })
-    
-        console.log("client connected")
-    })
-    
+   const WebSocket = require("ws");
+
+const PORT = 8080;
+
+// Criar o servidor WebSocket
+const wss = new WebSocket.Server({ port: PORT });
+
+console.log(`Servidor WebSocket rodando na porta ${PORT}`);
+
+// Objeto para guardar conexões ativas:
+// chave = userId; valor = { socket, userType }
+const clients = {};
+
+wss.on("connection", (ws) => {
+  console.log("Cliente conectado");
+
+  // Quando o cliente envia uma mensagem
+  ws.on("message", (data) => {
+    try {
+      const msg = JSON.parse(data);
+
+      // Registro inicial do usuário
+      if (msg.type === "register") {
+        // Salva a conexão com userId e userType
+        clients[msg.userId] = {
+          socket: ws,
+          userType: msg.userType
+        };
+        // Também guardamos no ws para identificar depois
+        ws.userId = msg.userId;
+        ws.userType = msg.userType;
+
+        console.log(`Usuário ${msg.userId} registrado como tipo ${msg.userType}`);
+
+        return;
+      }
+
+      // Envio de mensagem privada
+      if (msg.type === "private_message") {
+        const sender = clients[msg.from];
+        const receiver = clients[msg.to];
+
+        // Verificar se ambos estão conectados
+        if (!sender || !receiver) {
+          ws.send(JSON.stringify({ type: "error", message: "Usuário não conectado." }));
+          return;
+        }
+
+        // Bloquear conversas entre usuários do mesmo tipo
+        if (sender.userType === receiver.userType) {
+          ws.send(JSON.stringify({ type: "error", message: "Você só pode conversar com um usuário do outro tipo." }));
+          return;
+        }
+
+        // Enviar a mensagem para o destinatário
+        receiver.socket.send(JSON.stringify({
+          type: "private_message",
+          from: msg.from,
+          message: msg.message,
+        }));
+
+        // Opcional: pode enviar a confirmação para quem enviou
+        ws.send(JSON.stringify({ type: "message_sent" }));
+      }
+
+    } catch (error) {
+      console.error("Erro ao processar mensagem:", error);
+      ws.send(JSON.stringify({ type: "error", message: "Formato de mensagem inválido." }));
+    }
+  });
+
+  ws.on("close", () => {
+    console.log(`Cliente ${ws.userId} desconectou`);
+    // Remover da lista clients
+    if (ws.userId) {
+      delete clients[ws.userId];
+    }
+  });
+
+  ws.on("error", (error) => {
+    console.error("WebSocket error:", error);
+  });
+});
+
 
 
     /////////////////////////////////////////////TESTE-BANCO///////////////////////////////////////////////////////
