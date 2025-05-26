@@ -479,6 +479,29 @@ app.get("/jovem/listar_para_idoso", (req, res) => {
 });
 
 
+app.get("/jovem/perfil_joven/:id", (req, res) => {
+    const sql = `
+      SELECT 
+        jovem.*, 
+        usuario.nome_completo 
+      FROM jovem 
+      INNER JOIN usuario ON jovem.id_usuario = usuario.id_usuario 
+      where jovem.id_jovem=?
+      ORDER BY jovem.id_jovem DESC 
+      LIMIT 10
+    `;
+    
+    dbConfig.query(sql, req.params.id, (error, result) => {
+      if (error) {
+        res.status(500).send({ erro: `Erro ao listar os jovem: ${error}` });
+      } else {
+        res.status(200).send({ msg: result });
+      }
+    });
+  });
+  
+
+
 // GET /idoso/:id
 app.get("/idoso/:id", (req, res) => {
   const id = req.params.id;
