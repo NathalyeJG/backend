@@ -416,148 +416,149 @@ app.get("/usuario/listar",(req,res)=>{
 
 
 // primeira rota para listar os dados do banco
-app.get("/idoso/listar_pos_cadastro",(req,res)=>{
-    //usar o comando select para listar todos os clientes
-        dbConfig.query("Select * from idoso order by id_idoso desc limit 0,10",(error,result)=>{
-            if(error){
-                res.status(500)
-                .send({erro:`Erro ao tentar listar os idoso ${error}`})
-            }
-            res.status(200).send({msg:result});
-        })
-     
-    });
+// Rota atualizada
+app.get("/idoso/listar_pos_cadastro", (req, res) => {
+  const sql = `
+    SELECT 
+      idoso.*, 
+      usuario.nome_completo 
+    FROM idoso 
+    INNER JOIN usuario ON idoso.id_usuario = usuario.id_usuario 
+    ORDER BY idoso.id_idoso DESC 
+    LIMIT 10
+  `;
+  
+  dbConfig.query(sql, (error, result) => {
+    if (error) {
+      res.status(500).send({ erro: `Erro ao listar os idosos: ${error}` });
+    } else {
+      res.status(200).send({ msg: result });
+    }
+  });
+});
 
+app.get("/idoso/perfil_idoso/:id", (req, res) => {
+  const sql = `
+    SELECT 
+      idoso.*, 
+      usuario.nome_completo 
+    FROM idoso 
+    INNER JOIN usuario ON idoso.id_usuario = usuario.id_usuario 
+    where idoso.id_idoso=?
+    ORDER BY idoso.id_idoso DESC 
+    LIMIT 10
+  `;
+  
+  dbConfig.query(sql, req.params.id, (error, result) => {
+    if (error) {
+      res.status(500).send({ erro: `Erro ao listar os idosos: ${error}` });
+    } else {
+      res.status(200).send({ msg: result });
+    }
+  });
+});
+
+
+    // Lista os 10 jovens mais recentes para exibir na tela inicial do idoso
+app.get("/jovem/listar_para_idoso", (req, res) => {
+  const sql = `
+    SELECT jovem.*, usuario.nome_completo, usuario.nome_usuario, usuario.email
+    FROM jovem
+    INNER JOIN usuario ON jovem.id_usuario = usuario.id_usuario
+    ORDER BY jovem.id_jovem DESC
+    LIMIT 10
+  `;
+
+  dbConfig.query(sql, (error, result) => {
+    if (error) {
+      res.status(500).send({ erro: "Erro ao listar os jovens: " + error });
+    } else {
+      res.status(200).send({ msg: result });
+    }
+  });
+});
+
+
+// GET /idoso/:id
+app.get("/idoso/:id", (req, res) => {
+  const id = req.params.id;
+  const sql = "SELECT * FROM idoso WHERE id_idoso = ?";
+  db.query(sql, [id], (erro, resultados) => {
+    if (erro) {
+      return res.status(500).json({ erro: "Erro no banco de dados" });
+    }
+    if (resultados.length === 0) {
+      return res.status(404).json({ erro: "Idoso não encontrado" });
+    }
+    res.json(resultados[0]);
+  });
+});
 
 
 
 //     // \\\\\\\\\\\\\\\\\\\\\\\\\\     teste server msg   \\\\\\\\\\\\\\\\\\\\\\
 
 
-// Importa os pacotes necessários
-//const express = require('express');               // Framework web para rotas REST
-//const mysql = require('mysql2/promise');          // Biblioteca para conectar ao MySQL com async/await
-const http = require('http');                     // Módulo nativo do Node para criar o servidor
-const socketio = require('socket.io');            // Biblioteca para WebSockets (tempo real)
+    // \\\\\\\\\\\\\\\\\\\\\\\\\\     teste server msg   \\\\\\\\\\\\\\\\\\\\\\
+    const { WebSocketServer } = require("ws")
+    const dotenv = require("dotenv")
+    
+    dotenv.config()
 
+// Cria um novo servidor WebSocket na porta definida no .env ou 8080
+const wss = new WebSocketServer({ port: process.env.PORT || 8080 });
 
+// Cria um mapa para armazenar conexões ativas por ID de usuário
+const conexoes = new Map();
 
-// Cria o servidor HTTP baseado no Express
-const servidorHttp = http.createServer(app);
+// Evento: quando um cliente se conecta
+wss.on("connection", (ws) => {
+  // Exibe erro no console caso ocorra
+  ws.on("error", console.error);
 
-// Cria o servidor Socket.IO em cima do HTTP
-const io = socketio(servidorHttp, {
-  cors: {
-    origin: "*", // Permite qualquer origem (em produção deve restringir)
-  }
-});
+  // Evento: quando o cliente envia uma mensagem
+  ws.on("message", (data) => {
+    const msg = JSON.parse(data); // converte a mensagem recebida de string para objeto
 
-
-
-// Conexão global com o banco
-let conexaoDB;
-
-// Função para conectar ao banco
-async function conectarDB() {
-  conexaoDB = await mysql.createConnection(dbConfig);
-  console.log('✅ Conectado ao banco MySQL');
-}
-conectarDB(); // Executa a conexão assim que o servidor iniciar
-
-// Objeto para mapear usuários online (chave: nome de usuário, valor: socket.id)
-const usuariosOnline = {};
-
-// Evento de conexão do WebSocket
-io.on('connection', (socket) => {
-  console.log('🔌 Novo usuário conectado:', socket.id);
-
-  // Evento para registrar o nome do usuário ao conectar
-  socket.on('registrar_usuario', (nomeUsuario) => {
-    usuariosOnline[nomeUsuario] = socket.id;
-    console.log(`👤 Usuário registrado: ${nomeUsuario}`);
-  });
-
-  // Evento para envio de mensagem privada
-  socket.on('mensagem_privada', async (dados) => {
-    const { remetente, destinatario, mensagem } = dados;
-
-    try {
-      // Insere a mensagem na tabela de mensagens, buscando os IDs dos usuários pelo nome
-      const query = `
-        INSERT INTO mensagens (remetente_id, destinatario_id, conteudo)
-        SELECT r.id_usuario, d.id_usuario, ? 
-        FROM usuario r, usuario d 
-        WHERE r.nome_usuario = ? AND d.nome_usuario = ?
-      `;
-      await conexaoDB.execute(query, [mensagem, remetente, destinatario]);
-
-      // Envia a mensagem ao destinatário se ele estiver online
-      const socketDestinatario = usuariosOnline[destinatario];
-      if (socketDestinatario) {
-        io.to(socketDestinatario).emit('mensagem_recebida', {
-          remetente,
-          mensagem,
-        });
-      }
-    } catch (erro) {
-      console.error('❌ Erro ao salvar ou enviar a mensagem:', erro);
+    // Se o tipo da mensagem for "login", salva o ID na conexão e armazena no mapa
+    if (msg.tipo === "login") {
+      ws.id_usuario = msg.id;
+      conexoes.set(msg.id, ws);
+      console.log(`Usuário ${msg.id} conectado`);
+      return;
     }
-  });
 
-  // Evento de desconexão do socket
-  socket.on('disconnect', () => {
-    for (const nome in usuariosOnline) {
-      if (usuariosOnline[nome] === socket.id) {
-        delete usuariosOnline[nome];
-        console.log(`❎ Usuário desconectado: ${nome}`);
-        break;
+    // Se for uma mensagem de chat
+    if (msg.tipo === "mensagem") {
+      const { de, para, texto } = msg;
+
+      // Salva a mensagem no banco de dados
+      const sql = "INSERT INTO mensagem (id_de, id_para, texto) VALUES (?, ?, ?)";
+      dbConfig.query(sql, [de, para, texto], (err, results) => {
+        if (err) return console.error("Erro ao salvar mensagem:", err);
+        console.log("Mensagem salva no banco");
+      });
+
+      // Se o destinatário estiver conectado, envia a mensagem para ele
+      const wsDestino = conexoes.get(para);
+      if (wsDestino) {
+        wsDestino.send(JSON.stringify({
+          de,
+          texto
+        }));
       }
     }
   });
+
+  // Evento: quando a conexão é encerrada, remove do mapa
+  ws.on("close", () => {
+    if (ws.id_usuario) {
+      conexoes.delete(ws.id_usuario);
+      console.log(`Usuário ${ws.id_usuario} desconectado`);
+    }
+  });
+
+  console.log("Cliente conectado");
 });
-
-// Rota para buscar o histórico de mensagens entre dois usuários
-app.get('/historico/:usuario1/:usuario2', async (req, res) => {
-  const { usuario1, usuario2 } = req.params;
-
-  try {
-    const query = `
-      SELECT 
-        u1.nome_usuario AS remetente, 
-        u2.nome_usuario AS destinatario, 
-        m.conteudo, 
-        m.data_envio
-      FROM mensagens m
-      JOIN usuario u1 ON m.remetente_id = u1.id_usuario
-      JOIN usuario u2 ON m.destinatario_id = u2.id_usuario
-      WHERE (u1.nome_usuario = ? AND u2.nome_usuario = ?) 
-         OR (u1.nome_usuario = ? AND u2.nome_usuario = ?)
-      ORDER BY m.data_envio ASC
-    `;
-
-    const [mensagens] = await conexaoDB.execute(query, [usuario1, usuario2, usuario2, usuario1]);
-    res.json(mensagens);
-  } catch (erro) {
-    console.error('❌ Erro ao buscar histórico:', erro);
-    res.status(500).send('Erro ao buscar histórico');
-  }
-});
-
-// Define a porta do servidor
-const PORTA = 3000;
-servidorHttp.listen(PORTA, () => {
-  console.log(`🚀 Servidor rodando na porta ${PORTA}`);
-});
-
-
-
-
-
-
-
-
-
-
-
 app.listen(3000,
     ()=>console.log("Servidor online http://127.0.0.1:3000"))

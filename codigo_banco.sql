@@ -68,6 +68,17 @@ avaliacao varchar(150) not null
 );
 
 
+CREATE TABLE mensagens (
+    id_messagem INT AUTO_INCREMENT PRIMARY KEY,
+    id_remetente INT NOT NULL,        -- -> id da tabela 'usuario'
+    id_destinatario INT NOT NULL,     -- -> id da tabela 'usuario'
+    conteudo TEXT NOT NULL,
+    data_envio DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (id_remetente) REFERENCES usuario(id_usuario),
+    FOREIGN KEY (id_destinatario) REFERENCES usuario(id_usuario)
+);
+
+
 -- relacionar a tabela agendamento com a tabela jovem
 ALTER TABLE agendamento
 ADD CONSTRAINT `fk_agendamento_pk_jovem` 
