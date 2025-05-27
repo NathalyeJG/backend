@@ -479,7 +479,7 @@ app.get("/jovem/listar_para_idoso", (req, res) => {
 });
 
 
-app.get("/jovem/perfil_joven/:id", (req, res) => {
+app.get("/jovem/perfil_jovem/:id", (req, res) => {
     const sql = `
       SELECT 
         jovem.*, 

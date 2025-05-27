@@ -9,13 +9,7 @@ senha VARCHAR(15) NOT NULL,
 tipo_usuario BOOLEAN NOT NULL);
  
  
-CREATE TABLE agendamento (
-id_agendamento INT AUTO_INCREMENT PRIMARY KEY,
-id_jovem INT NOT NULL,
-id_idoso INT NOT NULL,
-data_hora DATETIME NOT NULL,
-duracao INT NOT NULL
-);
+
  
 CREATE TABLE endereco ( 
 id_endereco INT AUTO_INCREMENT PRIMARY KEY,
