@@ -95,60 +95,7 @@ app.delete("/idoso/apagar/:id",(req,res)=>{
         res.status(204).send({msg:`Dados atualizados`,payload:result});
     })
 });
-///////////////////////////////////////////////TABELA-AGENDAMENTO///////////////////////////////////////////////////////////////////////////////////
 
- // primeira rota para listar os dados do banco
-app.get("/agendamento/listar",(req,res)=>{
-//usar o comando select para listar todos os clientes
- 
-    dbConfig.query("Select * from agendamento",(error,result)=>{
-        if(error){
-            res.status(500)
-            .send({erro:`Erro ao tentar listar os agendamento${error}`})
-        }
-        res.status(200).send({msg:result});
-    })
- 
-});
-//Segunda rota para receber os dados enviados pelo usuario
-app.post("/agendamento/cadastrar",(req,res)=>{
- 
-    dbConfig.query("insert into agendamento set ?",req.body,(error,result)=>{
- 
-        if(error){
-            return res.status(500).send({erro:`erro ao tentar cadastrar idoso ${error}`})
-        }
-    res.status(201).send({msg:`agendamento cadastrado`,payload:result});
-    })
- 
-});
- 
-//Terceira rota para receber os dados e atualizar
-app.put("/agendamento/atualizar/:id",(req,res)=>{
-   
-    dbConfig.query("update agendamento set ? where id=?",[req.body, req.params.id],(error,result)=>{
- 
-        if(error){
-            return res.status(500).send({erro:`erro ao tentar atualizar ${error}`})
-        }
-   
-   
-    res.status(200).send({msg:`Dados atualizados`,payload:result});
-    })
-});
- 
-// Quarta rota para receber um id e apagar um dados
-app.delete("/agendamento/apagar/:id",(req,res)=>{
- 
- 
-    dbConfig.query("delete from agendamento  where id=?",req.params.id,(error,result)=>{
- 
-        if(error){
-            return res.status(500).send({erro:`erro ao tentar deletar ${error}`})
-        }
-        res.status(204).send({msg:`Dados atualizados`,payload:result});
-    })
-});
 /////////////////////////////////////////////TABELA-AVALIAÇÃO/////////////////////////////////////////////////////////////////////////////////
 
 // primeira rota para listar os dados do banco
@@ -518,6 +465,26 @@ app.get("/idoso/:id", (req, res) => {
 });
 
 
+  // Envia e salva uma nova mensagem no banco
+  app.post("/usuarios/mensagens", (req, res) => {
+    const { id_remetente, id_destinatario, conteudo } = req.body;
+  
+    if (!id_de || !id_para || !texto) {
+      return res.status(400).json({ erro: "Campos obrigatórios: id_de, id_para, texto" });
+    }
+  
+    const sql = "INSERT INTO mensagens (id_remetente, id_destinatario, conteudo) VALUES (?, ?, ?)";
+    dbConfig.query(sql, [id_remetente, id_destinatario, conteudo], (err, result) => {
+      if (err) {
+        console.error("Erro ao salvar mensagem:", err);
+        return res.status(500).json({ erro: "Erro ao salvar mensagem" });
+      }
+  
+      res.status(201).json({ mensagem: "Mensagem salva com sucesso", id: result.insertId });
+    });
+  });
+  
+
 
 //     // \\\\\\\\\\\\\\\\\\\\\\\\\\     teste server msg   \\\\\\\\\\\\\\\\\\\\\\
 
@@ -556,7 +523,7 @@ wss.on("connection", (ws) => {
       const { de, para, texto } = msg;
 
       // Salva a mensagem no banco de dados
-      const sql = "INSERT INTO mensagem (id_de, id_para, texto) VALUES (?, ?, ?)";
+      const sql = "INSERT INTO mensagens (id_de, id_para, texto) VALUES (?, ?, ?)";
       dbConfig.query(sql, [de, para, texto], (err, results) => {
         if (err) return console.error("Erro ao salvar mensagem:", err);
         console.log("Mensagem salva no banco");
@@ -582,6 +549,12 @@ wss.on("connection", (ws) => {
   });
 
   console.log("Cliente conectado");
+
+
+
+
+
+
 });
 app.listen(3000,
     ()=>console.log("Servidor online http://127.0.0.1:3000"))
