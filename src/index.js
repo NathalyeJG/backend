@@ -483,7 +483,91 @@ app.get("/idoso/:id", (req, res) => {
       res.status(201).json({ mensagem: "Mensagem salva com sucesso", id: result.insertId });
     });
   });
-  
+
+ 
+// ################################################# upload ##################################
+
+
+const multer = require('multer');
+const path = require('path');
+
+const PORT = 3000;
+
+// Configuração do Multer para armazenamento de arquivos
+const storage = multer.diskStorage({
+    destination: function (req, file, cb) {
+        // Onde os arquivos serão salvos.
+        // Certifique-se de que a pasta 'uploads' exista.
+        cb(null, 'uploads/');
+    },
+    filename: function (req, file, cb) {
+        // Nome do arquivo salvo: nome original + data + extensão
+        cb(null, file.fieldname + '-' + Date.now() + path.extname(file.originalname));
+    }
+});
+
+// Filtro para aceitar apenas imagens
+const fileFilter = (req, file, cb) => {
+    if (file.mimetype.startsWith('image/')) {
+        cb(null, true);
+    } else {
+        cb(new Error('Apenas imagens são permitidas!'), false);
+    }
+};
+
+const upload = multer({
+    storage: storage,
+    fileFilter: fileFilter,
+    limits: {
+        fileSize: 1024 * 1024 * 5 // Limite de 5MB por arquivo
+    }
+});
+
+// Serve arquivos estáticos da pasta atual (para o index.html)
+app.use(express.static(path.join(__dirname)));
+
+// Rota para o upload de fotos
+app.post('/upload/foto-jovem', upload.single('foto_jovem'), (req, res) => {
+    if (req.file) {
+        res.send(`
+            <h1>Upload realizado com sucesso!</h1>
+            <p>Nome do arquivo: ${req.file.filename}</p>
+            <img src="/uploads/${req.file.filename}" alt="Imagem Enviada" style="max-width: 300px;">
+            <br>
+            <a href="/">Voltar</a>
+        `);
+    } else {
+        res.status(400).send('Nenhum arquivo enviado ou tipo de arquivo inválido.');
+    }
+});
+
+// Middleware para tratamento de erros do Multer
+app.use((err, req, res, next) => {
+    if (err instanceof multer.MulterError) {
+        res.status(400).send(`Erro no Multer: ${err.message}`);
+    } else if (err) {
+        res.status(400).send(`Erro: ${err.message}`);
+    } else {
+        next();
+    }
+});
+
+
+// Inicia o servidor
+app.listen(PORT, () => {
+    console.log(`Servidor rodando em http://localhost:${PORT}`);
+});
+
+
+
+
+
+// ########################################## fim do upload ###########################################
+
+
+
+
+
 
 
 //     // \\\\\\\\\\\\\\\\\\\\\\\\\\     teste server msg   \\\\\\\\\\\\\\\\\\\\\\
