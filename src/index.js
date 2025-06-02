@@ -7,6 +7,12 @@ const express = require("express");
 const mysql = require("mysql2");
 
 const cors = require("cors")
+
+
+const multer = require('multer');
+const path = require('path');
+
+const PORT = 3000;
  
  
 //fazer conexao com o banco mysql
@@ -220,8 +226,111 @@ app.get("/endereco/listar",(req,res)=>{
         })
      
     });
+
+
+
+  
+
+
+// ################################################# upload ##################################
+
+let filePathForDb="foto";
+let caminho = "caminho da foto"
+
+// Configuração do Multer para armazenamento de arquivos
+const storage = multer.diskStorage({
+    destination: function (req, file, cb) {
+        // Onde os arquivos serão salvos.
+        // Certifique-se de que a pasta 'uploads' exista.
+        cb(null, 'uploads/');
+    },
+    filename: function (req, file, cb) {
+        // Nome do arquivo salvo: nome original + data + extensão
+        cb(null, file.fieldname + '-' + Date.now() + path.extname(file.originalname));
+        caminho = file.fieldname + '-' + Date.now() + path.extname(file.originalname)
+    }
+});
+
+// Filtro para aceitar apenas imagens
+const fileFilter = (req, file, cb) => {
+    if (file.mimetype.startsWith('image/')) {
+        cb(null, true);
+    } else {
+        cb(new Error('Apenas imagens são permitidas!'), false);
+    }
+};
+
+const upload = multer({
+    storage: storage,
+    fileFilter: fileFilter,
+    limits: {
+        fileSize: 1024 * 1024 * 5 // Limite de 5MB por arquivo
+    }
+});
+
+// Serve arquivos estáticos da pasta atual (para o index.html)
+app.use(express.static(path.join(__dirname)));
+
+// Ela permite que arquivos dentro da pasta 'uploads' sejam acessados via '/uploads' na URL.
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
+// Middleware para tratamento de erros do Multer
+app.use((err, req, res, next) => {
+    if (err instanceof multer.MulterError) {
+        res.status(400).send(`Erro no Multer: ${err.message}`);
+    } else if (err) {
+        res.status(400).send(`Erro: ${err.message}`);
+    } else {
+        next();
+    }
+});
+
+
+
+// Rota para o upload de fotos
+app.post('/upload/foto-jovem', upload.single('foto_jovem'), async (req, res) => {
+    console.log(`id do usuario ${req.body.id_usuario}`)
+   
+        const filename = req.file.filename;
+        filePathForDb = `/uploads/${filename}`; // Caminho que será salvo no DB
+        cadastrar(req,res)     
+});
+ 
+     
+    //Terceira rota para receber os dados e atualizar
+    app.put("/jovem/atualizar/:id",(req,res)=>{
+       
+        dbConfig.query("update jovem set ? where id=?",[req.body, req.params.id],(error,result)=>{
+     
+            if(error){
+                return res.status(500).send({erro:`erro ao tentar atualizar ${error}`})
+            }
+       
+       
+        res.status(200).send({msg:`Dados atualizados`,payload:result});
+        })
+    });
+     
+    // Quarta rota para receber um id e apagar um dados
+    app.delete("/jovem/apagar/:id",(req,res)=>{
+     
+     
+        dbConfig.query("delete from idoso  where id=?",req.params.id,(error,result)=>{
+     
+            if(error){
+                return res.status(500).send({erro:`erro ao tentar deletar ${error}`})
+            }
+            res.status(204).send({msg:`Dados atualizados`,payload:result});
+        })
+    })
+
+
+
+
+    // #################################### Fim do Upload #################################################
+
     //Segunda rota para receber os dados enviados pelo usuario
-   app.post("/jovem/cadastrar",(req,res)=>{
+   function cadastrar(req,res){
  
     let id_endereco = 0
     dbConfig.query("insert into endereco(logradouro,logradouro_nome,numero,complemento,cidade,estado,bairro,cep,pais)values(?,?,?,?,?,?,?,?,?)",
@@ -232,17 +341,20 @@ app.get("/endereco/listar",(req,res)=>{
         }
         id_endereco = result.insertId;
 
+        console.log(filePathForDb)
+        console.log(caminho)
   
      dbConfig.query("insert into jovem(id_usuario,id_endereco,cpf_jovem,valor_jovem,foto_jovem,assinante_jovem,data_nascimento_jovem,experiencia_jovem,descricao_jovem,telefone_jovem,genero_jovem) values(?,?,?,?,?,?,?,?,?,?,?)",
-        [req.body.id_usuario,id_endereco,req.body.cpf_jovem,req.body.valor_jovem,req.body.foto_jovem,req.body.assinante_jovem,req.body.data_nascimento_jovem,req.body.experiencia_jovem,req.body.descricao_jovem,req.body.telefone_jovem,req.body.genero_jovem],(er,rs)=>{
+        [req.body.id_usuario,id_endereco,req.body.cpf_jovem,req.body.valor_jovem,caminho.toString(),req.body.assinante_jovem,req.body.data_nascimento_jovem,req.body.experiencia_jovem,req.body.descricao_jovem,req.body.telefone_jovem,req.body.genero_jovem],(er,rs)=>{
  
         if(er){
             return res.status(500).send({erro:`erro ao tentar cadastrar jovem ${er}`})
         }
     res.status(201).send({msg:`jovem cadastrado`,payload:rs});
     })
-})
+
 });
+   }
  
      
     //Terceira rota para receber os dados e atualizar
@@ -485,106 +597,6 @@ app.get("/idoso/:id", (req, res) => {
   });
 
  
-// ################################################# upload ##################################
-
-
-const multer = require('multer');
-const path = require('path');
-
-const PORT = 3000;
-
-// Configuração do Multer para armazenamento de arquivos
-const storage = multer.diskStorage({
-    destination: function (req, file, cb) {
-        // Onde os arquivos serão salvos.
-        // Certifique-se de que a pasta 'uploads' exista.
-        cb(null, 'uploads/');
-    },
-    filename: function (req, file, cb) {
-        // Nome do arquivo salvo: nome original + data + extensão
-        cb(null, file.fieldname + '-' + Date.now() + path.extname(file.originalname));
-    }
-});
-
-// Filtro para aceitar apenas imagens
-const fileFilter = (req, file, cb) => {
-    if (file.mimetype.startsWith('image/')) {
-        cb(null, true);
-    } else {
-        cb(new Error('Apenas imagens são permitidas!'), false);
-    }
-};
-
-const upload = multer({
-    storage: storage,
-    fileFilter: fileFilter,
-    limits: {
-        fileSize: 1024 * 1024 * 5 // Limite de 5MB por arquivo
-    }
-});
-
-// Serve arquivos estáticos da pasta atual (para o index.html)
-app.use(express.static(path.join(__dirname)));
-
-// Ela permite que arquivos dentro da pasta 'uploads' sejam acessados via '/uploads' na URL.
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
-
-// Rota para o upload de fotos
-app.post('/upload/foto-jovem', upload.single('foto_jovem'), async (req, res) => {
-    if (req.file) {
-        const filename = req.file.filename;
-        const filePathForDb = `/uploads/${filename}`; // Caminho que será salvo no DB
-
-        const idJovem = req.body.id_jovem; // Obtém o ID do jovem do corpo da requisição
-
-        if (!idJovem) {
-            return res.status(400).send('ID do jovem não fornecido para salvar a foto.');
-        }
-
-        try {
-            // Consulta SQL para atualizar a coluna 'foto_jovem' na tabela 'jovem'
-            const query = 'UPDATE jovem SET foto_jovem = ? WHERE id_jovem = ?';
-            await db.execute(query, [filePathForDb, idJovem]); // 'db.execute' para mysql2/promise
-
-            console.log(`Foto salva e caminho '${filePathForDb}' atualizado para o jovem ID: ${idJovem}`);
-
-            res.send(`
-                <h1>Upload realizado com sucesso!</h1>
-                <p>Nome do arquivo: ${filename}</p>
-                <img src="${filePathForDb}" alt="Imagem Enviada" style="max-width: 300px;">
-                <br>
-                <a href="/">Voltar</a>
-            `);
-        } catch (dbError) {
-            console.error("Erro ao salvar o caminho da imagem no banco de dados:", dbError);
-            res.status(500).send("Erro interno do servidor ao processar o upload e salvar no banco de dados.");
-        }
-
-    } else {
-        res.status(400).send('Nenhum arquivo enviado ou tipo de arquivo inválido.');
-    }
-});
-
-
-// Middleware para tratamento de erros do Multer
-app.use((err, req, res, next) => {
-    if (err instanceof multer.MulterError) {
-        res.status(400).send(`Erro no Multer: ${err.message}`);
-    } else if (err) {
-        res.status(400).send(`Erro: ${err.message}`);
-    } else {
-        next();
-    }
-});
-
-
-// Inicia o servidor
-app.listen(PORT, () => {
-    console.log(`Servidor rodando em http://localhost:${PORT}`);
-});
-
-
-
 
 
 // ########################################## fim do upload ###########################################
@@ -665,5 +677,10 @@ wss.on("connection", (ws) => {
 
 
 });
+
+
+
+
+
 app.listen(3000,
     ()=>console.log("Servidor online http://127.0.0.1:3000"))
