@@ -526,20 +526,45 @@ const upload = multer({
 // Serve arquivos estáticos da pasta atual (para o index.html)
 app.use(express.static(path.join(__dirname)));
 
+// Ela permite que arquivos dentro da pasta 'uploads' sejam acessados via '/uploads' na URL.
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
 // Rota para o upload de fotos
-app.post('/upload/foto-jovem', upload.single('foto_jovem'), (req, res) => {
+app.post('/upload/foto-jovem', upload.single('foto_jovem'), async (req, res) => {
     if (req.file) {
-        res.send(`
-            <h1>Upload realizado com sucesso!</h1>
-            <p>Nome do arquivo: ${req.file.filename}</p>
-            <img src="/uploads/${req.file.filename}" alt="Imagem Enviada" style="max-width: 300px;">
-            <br>
-            <a href="/">Voltar</a>
-        `);
+        const filename = req.file.filename;
+        const filePathForDb = `/uploads/${filename}`; // Caminho que será salvo no DB
+
+        const idJovem = req.body.id_jovem; // Obtém o ID do jovem do corpo da requisição
+
+        if (!idJovem) {
+            return res.status(400).send('ID do jovem não fornecido para salvar a foto.');
+        }
+
+        try {
+            // Consulta SQL para atualizar a coluna 'foto_jovem' na tabela 'jovem'
+            const query = 'UPDATE jovem SET foto_jovem = ? WHERE id_jovem = ?';
+            await db.execute(query, [filePathForDb, idJovem]); // 'db.execute' para mysql2/promise
+
+            console.log(`Foto salva e caminho '${filePathForDb}' atualizado para o jovem ID: ${idJovem}`);
+
+            res.send(`
+                <h1>Upload realizado com sucesso!</h1>
+                <p>Nome do arquivo: ${filename}</p>
+                <img src="${filePathForDb}" alt="Imagem Enviada" style="max-width: 300px;">
+                <br>
+                <a href="/">Voltar</a>
+            `);
+        } catch (dbError) {
+            console.error("Erro ao salvar o caminho da imagem no banco de dados:", dbError);
+            res.status(500).send("Erro interno do servidor ao processar o upload e salvar no banco de dados.");
+        }
+
     } else {
         res.status(400).send('Nenhum arquivo enviado ou tipo de arquivo inválido.');
     }
 });
+
 
 // Middleware para tratamento de erros do Multer
 app.use((err, req, res, next) => {
