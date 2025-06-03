@@ -5,14 +5,11 @@ const express = require("express");
 //require importa a bibliotecqa
 //importar a biblioiteca mysql
 const mysql = require("mysql2");
-
-const cors = require("cors")
-
-
 const multer = require('multer');
-const path = require('path');
+const cors = require("cors");
+const path = require('path'); // Para trabalhar com caminhos de arquivo
 
-const PORT = 3000;
+
  
  
 //fazer conexao com o banco mysql
@@ -226,40 +223,33 @@ app.get("/endereco/listar",(req,res)=>{
         })
      
     });
+   // --- Configuração do Multer para Upload de Imagens ---
 
-
-
-  
-
-
-// ################################################# upload ##################################
-
-let filePathForDb="foto";
-let caminho = "caminho da foto"
-
-// Configuração do Multer para armazenamento de arquivos
+// Define onde as imagens serão salvas e como serão nomeadas
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
-        // Onde os arquivos serão salvos.
-        // Certifique-se de que a pasta 'uploads' exista.
+        // 'uploads/' é o diretório onde as imagens serão armazenadas
         cb(null, 'uploads/');
     },
     filename: function (req, file, cb) {
-        // Nome do arquivo salvo: nome original + data + extensão
+        // Define o nome do arquivo: campo original + timestamp + extensão original
+        // Ex: foto_jovem-1678888888888.jpg
         cb(null, file.fieldname + '-' + Date.now() + path.extname(file.originalname));
-        caminho = file.fieldname + '-' + Date.now() + path.extname(file.originalname)
     }
 });
 
-// Filtro para aceitar apenas imagens
+// Filtro para aceitar apenas tipos de imagem
 const fileFilter = (req, file, cb) => {
-    if (file.mimetype.startsWith('image/')) {
-        cb(null, true);
+    const allowedMimes = ['image/jpeg', 'image/png', 'image/gif'];
+    if (allowedMimes.includes(file.mimetype)) {
+        cb(null, true); // Aceita o arquivo
     } else {
-        cb(new Error('Apenas imagens são permitidas!'), false);
+        // Rejeita o arquivo e retorna um erro
+        cb(new Error('Formato de arquivo inválido. Apenas JPG, PNG e GIF são permitidos.'), false);
     }
 };
 
+// Configura o Multer com as opções de armazenamento e filtro
 const upload = multer({
     storage: storage,
     fileFilter: fileFilter,
@@ -268,94 +258,66 @@ const upload = multer({
     }
 });
 
-// Serve arquivos estáticos da pasta atual (para o index.html)
-app.use(express.static(path.join(__dirname)));
-
-// Ela permite que arquivos dentro da pasta 'uploads' sejam acessados via '/uploads' na URL.
+// --- Servir arquivos estáticos (Imagens Uploaded) ---
+// Isso permite que as imagens na pasta 'uploads' sejam acessíveis via URL
+// Ex: http://localhost:3000/uploads/nome_da_minha_foto.jpg
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// Middleware para tratamento de erros do Multer
-app.use((err, req, res, next) => {
-    if (err instanceof multer.MulterError) {
-        res.status(400).send(`Erro no Multer: ${err.message}`);
-    } else if (err) {
-        res.status(400).send(`Erro: ${err.message}`);
-    } else {
-        next();
+// --- Rota de Upload e Cadastro de Jovem ---
+
+// Use `upload.single('foto_jovem')` para indicar que você espera um único arquivo
+// com o nome de campo 'foto_jovem' no formulário multipart.
+app.post('/jovem/cadastrar', upload.single('foto_jovem'), (req, res) => {
+    // Verifica se um arquivo foi enviado
+    if (!req.file) {
+        return res.status(400).send({ erro: 'Nenhuma foto foi enviada.' });
     }
-});
+
+    // `req.file` contém informações sobre o arquivo enviado pelo Multer
+    const foto_jovem_path = `/uploads/${req.file.filename}`; // Caminho relativo para salvar no DB
+
+    // `req.body` agora contém os outros campos de texto do formulário multipart
+    // (ex: id_usuario, cpf_jovem, etc.)
+    const { 
+        id_usuario, 
+        logradouro, logradouro_nome, numero, complemento, cidade, estado, bairro, cep, pais,
+        cpf_jovem, valor_jovem, assinante_jovem, data_nascimento_jovem, 
+        experiencia_jovem, descricao_jovem, telefone_jovem, genero_jovem 
+    } = req.body;
+
+    console.log(`[VERIFICACAO] id_usuario ANTES da primeira query: ${id_usuario}`);
+    console.log(`[VERIFICACAO] tipo de id_usuario ANTES da primeira query: ${typeof id_usuario}`);
 
 
+    // Log para depuração: verifique se o ID do usuário está chegando
+    console.log(`ID do usuário recebido: ${id_usuario}`);
+    console.log(`Caminho da foto para o DB: ${foto_jovem_path}`);
+    console.log('Dados do corpo da requisição:', req.body); // Verifique todos os campos
 
-// Rota para o upload de fotos
-app.post('/upload/foto-jovem', upload.single('foto_jovem'), async (req, res) => {
-    console.log(`id do usuario ${req.body.id_usuario}`)
-   
-        const filename = req.file.filename;
-        filePathForDb = `/uploads/${filename}`; // Caminho que será salvo no DB
-        cadastrar(req,res)     
-});
- 
-     
-    //Terceira rota para receber os dados e atualizar
-    app.put("/jovem/atualizar/:id",(req,res)=>{
-       
-        dbConfig.query("update jovem set ? where id=?",[req.body, req.params.id],(error,result)=>{
-     
-            if(error){
-                return res.status(500).send({erro:`erro ao tentar atualizar ${error}`})
+    let id_endereco = 0;
+
+    // Inserir endereço
+    dbConfig.query("INSERT INTO endereco(logradouro, logradouro_nome, numero, complemento, cidade, estado, bairro, cep, pais) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        [logradouro, logradouro_nome, numero, complemento, cidade, estado, bairro, cep, pais], (error, result) => {
+            if (error) {
+                console.error("Erro ao cadastrar endereço:", error);
+                return res.status(500).send({ erro: `Erro ao tentar cadastrar endereço: ${error.message}` });
             }
-       
-       
-        res.status(200).send({msg:`Dados atualizados`,payload:result});
-        })
-    });
-     
-    // Quarta rota para receber um id e apagar um dados
-    app.delete("/jovem/apagar/:id",(req,res)=>{
-     
-     
-        dbConfig.query("delete from idoso  where id=?",req.params.id,(error,result)=>{
-     
-            if(error){
-                return res.status(500).send({erro:`erro ao tentar deletar ${error}`})
-            }
-            res.status(204).send({msg:`Dados atualizados`,payload:result});
-        })
-    })
+            id_endereco = result.insertId;
 
+            
 
-
-
-    // #################################### Fim do Upload #################################################
-
-    //Segunda rota para receber os dados enviados pelo usuario
-   function cadastrar(req,res){
- 
-    let id_endereco = 0
-    dbConfig.query("insert into endereco(logradouro,logradouro_nome,numero,complemento,cidade,estado,bairro,cep,pais)values(?,?,?,?,?,?,?,?,?)",
-        [req.body.logradouro,req.body.logradouro_nome,req.body.numero,req.body.complemento,req.body.cidade,req.body.estado,req.body.bairro,req.body.cep,req.body.pais],(error,result)=>{
-     
-        if(error){
-            return res.status(500).send({erro:`erro ao tentar cadastrar endereco ${error}`})
-        }
-        id_endereco = result.insertId;
-
-        console.log(filePathForDb)
-        console.log(caminho)
-  
-     dbConfig.query("insert into jovem(id_usuario,id_endereco,cpf_jovem,valor_jovem,foto_jovem,assinante_jovem,data_nascimento_jovem,experiencia_jovem,descricao_jovem,telefone_jovem,genero_jovem) values(?,?,?,?,?,?,?,?,?,?,?)",
-        [req.body.id_usuario,id_endereco,req.body.cpf_jovem,req.body.valor_jovem,caminho.toString(),req.body.assinante_jovem,req.body.data_nascimento_jovem,req.body.experiencia_jovem,req.body.descricao_jovem,req.body.telefone_jovem,req.body.genero_jovem],(er,rs)=>{
- 
-        if(er){
-            return res.status(500).send({erro:`erro ao tentar cadastrar jovem ${er}`})
-        }
-    res.status(201).send({msg:`jovem cadastrado`,payload:rs});
-    })
-
+            // Inserir jovem
+            dbConfig.query("INSERT INTO jovem(id_usuario, id_endereco, cpf_jovem, valor_jovem, foto_jovem, assinante_jovem, data_nascimento_jovem, experiencia_jovem, descricao_jovem, telefone_jovem, genero_jovem) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                [id_usuario, id_endereco, cpf_jovem, valor_jovem, foto_jovem_path, assinante_jovem, data_nascimento_jovem, experiencia_jovem, descricao_jovem, telefone_jovem, genero_jovem], (er, rs) => {
+                    if (er) {
+                        console.error("Erro ao cadastrar jovem:", er);
+                        return res.status(500).send({ erro: `Erro ao tentar cadastrar jovem: ${er.message}` });
+                    }
+                    res.status(201).send({ msg: `Jovem cadastrado com sucesso!`, payload: rs });
+                });
+        });
 });
-   }
- 
      
     //Terceira rota para receber os dados e atualizar
     app.put("/jovem/atualizar/:id",(req,res)=>{
@@ -595,19 +557,11 @@ app.get("/idoso/:id", (req, res) => {
       res.status(201).json({ mensagem: "Mensagem salva com sucesso", id: result.insertId });
     });
   });
-
- 
-
-
-// ########################################## fim do upload ###########################################
-
-
-
-
-
+  
 
 
 //     // \\\\\\\\\\\\\\\\\\\\\\\\\\     teste server msg   \\\\\\\\\\\\\\\\\\\\\\
+
 
 
     // \\\\\\\\\\\\\\\\\\\\\\\\\\     teste server msg   \\\\\\\\\\\\\\\\\\\\\\
@@ -677,10 +631,5 @@ wss.on("connection", (ws) => {
 
 
 });
-
-
-
-
-
 app.listen(3000,
     ()=>console.log("Servidor online http://127.0.0.1:3000"))
