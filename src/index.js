@@ -36,68 +36,7 @@ app.use(express.json());
  
 app.use(cors())
 
-// primeira rota para listar os dados do banco
-app.get("/idoso/listar",(req,res)=>{
-//usar o comando select para listar todos os clientes
-    dbConfig.query("Select * from idoso",(error,result)=>{
-        if(error){
-            res.status(500)
-            .send({erro:`Erro ao tentar listar os idosos ${error}`})
-        }
-        res.status(200).send({msg:result});
-    })
- 
-});
-//Segunda rota para receber os dados enviados pelo usuario.
-app.post("/idoso/cadastrar",(req,res)=>{
- 
-    let id_endereco = 0
-    dbConfig.query("insert into endereco(logradouro,logradouro_nome,numero,complemento,cidade,estado,bairro,cep,pais)values(?,?,?,?,?,?,?,?,?)",
-        [req.body.logradouro,req.body.logradouro_nome,req.body.numero,req.body.complemento,req.body.cidade,req.body.estado,req.body.bairro,req.body.cep,req.body.pais],(error,result)=>{
-     
-        if(error){
-            return res.status(500).send({erro:`erro ao tentar cadastrar endereco ${error}`})
-        }
-        id_endereco = result.insertId;
 
-  
-     dbConfig.query("insert into idoso(id_usuario,id_endereco,foto_idoso,assinante_idoso,cpf,data_nascimento,comorbidade,tipo_comorbidade,descricao,telefone_idoso,genero) values(?,?,?,?,?,?,?,?,?,?,?)",
-        [req.body.id_usuario,id_endereco,req.body.foto_idoso,req.body.assinante_idoso,req.body.cpf,req.body.data_nascimento,req.body.comorbidade,req.body.tipo_comorbidade,req.body.descricao,req.body.telefone_idoso,req.body.genero],(er,rs)=>{
- 
-        if(er){
-            return res.status(500).send({erro:`erro ao tentar cadastrar idoso ${er}`})
-        }
-    res.status(201).send({msg:`idoso cadastrado`,payload:rs});
-    })
-})
-});
- 
-//Terceira rota para receber os dados e atualizar
-app.put("/idoso/atualizar/:id",(req,res)=>{
-   
-    dbConfig.query("update idoso set ? where id=?",[req.body, req.params.id],(error,result)=>{
- 
-        if(error){
-            return res.status(500).send({erro:`erro ao tentar atualizar ${error}`})
-        }
-   
-   
-    res.status(200).send({msg:`Dados atualizados`,payload:result});
-    })
-});
- 
-// Quarta rota para receber um id e apagar um dados
-app.delete("/idoso/apagar/:id",(req,res)=>{
- 
- 
-    dbConfig.query("delete from idoso  where id=?",req.params.id,(error,result)=>{
- 
-        if(error){
-            return res.status(500).send({erro:`erro ao tentar deletar ${error}`})
-        }
-        res.status(204).send({msg:`Dados atualizados`,payload:result});
-    })
-});
 
 /////////////////////////////////////////////TABELA-AVALIAÇÃO/////////////////////////////////////////////////////////////////////////////////
 
@@ -284,15 +223,18 @@ app.post('/jovem/cadastrar', upload.single('foto_jovem'), (req, res) => {
         cpf_jovem, valor_jovem, assinante_jovem, data_nascimento_jovem, 
         experiencia_jovem, descricao_jovem, telefone_jovem, genero_jovem 
     } = req.body;
+// ################################### TESTE PARA VER OQUE ESTAVA CHEGANDO ##############################
+    // console.log(`[VERIFICACAO] id_usuario ANTES da primeira query: ${id_usuario}`);
+    // console.log(`[VERIFICACAO] tipo de id_usuario ANTES da primeira query: ${typeof id_usuario}`);
 
-    console.log(`[VERIFICACAO] id_usuario ANTES da primeira query: ${id_usuario}`);
-    console.log(`[VERIFICACAO] tipo de id_usuario ANTES da primeira query: ${typeof id_usuario}`);
+
+    // // Log para depuração: verifique se o ID do usuário está chegando
+    // console.log(`ID do usuário recebido: ${id_usuario}`);
+    // console.log(`Caminho da foto para o DB: ${foto_jovem_path}`);
+    // console.log('Dados do corpo da requisição:', req.body); // Verifique todos os campos
 
 
-    // Log para depuração: verifique se o ID do usuário está chegando
-    console.log(`ID do usuário recebido: ${id_usuario}`);
-    console.log(`Caminho da foto para o DB: ${foto_jovem_path}`);
-    console.log('Dados do corpo da requisição:', req.body); // Verifique todos os campos
+    // #####################################################################################################
 
     let id_endereco = 0;
 
@@ -345,6 +287,114 @@ app.post('/jovem/cadastrar', upload.single('foto_jovem'), (req, res) => {
             res.status(204).send({msg:`Dados atualizados`,payload:result});
         })
     });
+
+    // ######################################### IDOSO ###########################################
+
+    // primeira rota para listar os dados do banco
+    app.get("/idoso/listar",(req,res)=>{
+    //usar o comando select para listar todos os clientes
+        dbConfig.query("Select * from idoso",(error,result)=>{
+            if(error){
+                res.status(500)
+                .send({erro:`Erro ao tentar listar os idosos ${error}`})
+            }
+            res.status(200).send({msg:result});
+        })
+     
+    });
+   //Segunda rota para receber os dados enviados pelo usuario.
+app.post('/idoso/cadastrar', upload.single('foto_idoso'), (req,res)=>{
+
+    // 1. Verificar se a foto foi enviada
+    if (!req.file) {
+        return res.status(400).send({ erro: 'Nenhuma foto do idoso foi enviada.' });
+    }
+
+    // 2. Obter o caminho da foto gerado pelo Multer
+    const foto_idoso_path = `/uploads/${req.file.filename}`; // Caminho relativo para salvar no DB
+
+    // 3. Desestruturar os dados do req.body (campos do formulário de texto)
+    // Adapte estes nomes de variáveis para os nomes dos seus campos no formulário HTML do idoso
+    const { 
+        id_usuario, 
+        logradouro, logradouro_nome, numero, complemento, cidade, estado, bairro, cep, pais,
+        // CAMPOS ESPECÍFICOS DO IDOSO
+        cpf, // Assumindo que o campo no frontend é 'cpf' e não 'cpf_jovem'
+        data_nascimento, // Assumindo que o campo no frontend é 'data_nascimento'
+        comorbidade, 
+        tipo_comorbidade, 
+        descricao, 
+        telefone_idoso, 
+        genero, // Campo para o gênero do idoso
+        assinante_idoso // Campo para assinante do idoso
+    } = req.body;
+
+    // Converte assinante_idoso e genero para 1 ou 0 se forem BOOLEAN no DB
+    const assinante_idoso_db = (assinante_idoso === 'true' || assinante_idoso === true || assinante_idoso === 1) ? 1 : 0;
+    const genero_db = (genero === 'true' || genero === true || genero === 1) ? 1 : 0; // Se genero for BOOLEAN. Se for STRING, remova esta linha e use 'genero' direto
+
+    // Log para depuração:
+    console.log(`[IDOSO BACKEND] ID do usuário recebido: ${id_usuario}`);
+    console.log(`[IDOSO BACKEND] Caminho da foto para o DB: ${foto_idoso_path}`);
+    console.log(`[IDOSO BACKEND] Dados do corpo da requisição:`, req.body);
+
+    let id_endereco = 0;
+
+    // 4. Inserir Endereço Primeiro
+    dbConfig.query("INSERT INTO endereco(logradouro, logradouro_nome, numero, complemento, cidade, estado, bairro, cep, pais) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        [logradouro, logradouro_nome, numero, complemento, cidade, estado, bairro, cep, pais], (error, result) => {
+            if (error) {
+                console.error("ERRO ao CADASTRAR ENDEREÇO do idoso:", error);
+                return res.status(500).send({ erro: `Erro ao tentar cadastrar endereço do idoso: ${error.message}` });
+            }
+            id_endereco = result.insertId;
+            console.log(`[IDOSO BACKEND] ID do Endereço gerado para idoso: ${id_endereco}`);
+
+            // 5. Inserir Idoso (usando o id_endereco recém-gerado e o caminho da foto)
+            dbConfig.query("INSERT INTO idoso(id_usuario, id_endereco, foto_idoso, assinante_idoso, cpf, data_nascimento, comorbidade, tipo_comorbidade, descricao, telefone_idoso, genero) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+
+                [id_usuario, id_endereco, foto_idoso_path, assinante_idoso_db, cpf,
+                 data_nascimento, comorbidade, tipo_comorbidade, descricao, telefone_idoso, genero_db 
+                ], (er, rs) => {
+
+                    
+                    if (er) {
+                        console.error("ERRO ao CADASTRAR IDOSO:", er);
+                        return res.status(500).send({ erro: `Erro ao tentar cadastrar idoso: ${er.message}` });
+                    }
+                    res.status(201).send({ msg: `Idoso cadastrado com sucesso!`, payload: rs });
+                });
+        });
+});
+     
+    //Terceira rota para receber os dados e atualizar
+    app.put("/idoso/atualizar/:id",(req,res)=>{
+       
+        dbConfig.query("update idoso set ? where id=?",[req.body, req.params.id],(error,result)=>{
+     
+            if(error){
+                return res.status(500).send({erro:`erro ao tentar atualizar ${error}`})
+            }
+       
+       
+        res.status(200).send({msg:`Dados atualizados`,payload:result});
+        })
+    });
+     
+    // Quarta rota para receber um id e apagar um dados
+    app.delete("/idoso/apagar/:id",(req,res)=>{
+     
+     
+        dbConfig.query("delete from idoso  where id=?",req.params.id,(error,result)=>{
+     
+            if(error){
+                return res.status(500).send({erro:`erro ao tentar deletar ${error}`})
+            }
+            res.status(204).send({msg:`Dados atualizados`,payload:result});
+        })
+    });
+
+    // ######################################################################################
 
     ///////////////////////////////////////////TABELA-USUARIO////////////////////////////////////////////////////////////////////////
     // primeira rota para listar os dados do banco
