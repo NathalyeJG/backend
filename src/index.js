@@ -356,7 +356,6 @@ app.post('/idoso/cadastrar', upload.single('foto_idoso'), (req,res)=>{
                 [id_usuario, id_endereco, foto_idoso_path, assinante_idoso_db, cpf,
                  data_nascimento, comorbidade, tipo_comorbidade, descricao, telefone_idoso, genero_db 
                 ], (er, rs) => {
-
                     
                     if (er) {
                         console.error("ERRO ao CADASTRAR IDOSO:", er);
