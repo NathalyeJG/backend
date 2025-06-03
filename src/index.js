@@ -164,6 +164,13 @@ app.get("/endereco/listar",(req,res)=>{
     });
    // --- Configuração do Multer para Upload de Imagens ---
 
+
+
+// --- Servir arquivos estáticos (Imagens Uploaded) ---
+// Isso permite que as imagens na pasta 'uploads' sejam acessíveis via URL
+// Ex: http://localhost:3000/uploads/nome_da_minha_foto.jpg
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
 // Define onde as imagens serão salvas e como serão nomeadas
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
@@ -196,11 +203,6 @@ const upload = multer({
         fileSize: 1024 * 1024 * 5 // Limite de 5MB por arquivo
     }
 });
-
-// --- Servir arquivos estáticos (Imagens Uploaded) ---
-// Isso permite que as imagens na pasta 'uploads' sejam acessíveis via URL
-// Ex: http://localhost:3000/uploads/nome_da_minha_foto.jpg
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // --- Rota de Upload e Cadastro de Jovem ---
 
