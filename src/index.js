@@ -200,6 +200,7 @@ app.post('/jovem/cadastrar', upload.single('foto_jovem'), (req, res) => {
     // #####################################################################################################
 
     let id_endereco = 0;
+    let id_jovem = 0;
 
     // Inserir endereço
     dbConfig.query("INSERT INTO endereco(logradouro, logradouro_nome, numero, complemento, cidade, estado, bairro, cep, pais) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
@@ -219,8 +220,21 @@ app.post('/jovem/cadastrar', upload.single('foto_jovem'), (req, res) => {
                         console.error("Erro ao cadastrar jovem:", er);
                         return res.status(500).send({ erro: `Erro ao tentar cadastrar jovem: ${er.message}` });
                     }
-                    res.status(201).send({ msg: `Jovem cadastrado com sucesso!`, payload: rs });
+                    id_jovem = rs.insertId
+                    //res.status(201).send({ msg: `Jovem cadastrado com sucesso!`, payload: rs });
+                    dbConfig.query("select * from jovem where id_jovem = ?",
+                        id_jovem, (er, rsjovem) => {
+                        if (er) {
+                            console.error("Erro ao cadastrar jovem:", er);
+                            return res.status(500).send({ erro: `Erro ao tentar cadastrar jovem: ${er.message}` });
+                        }
+                        res.status(201).send({ msg: `Jovem cadastrado com sucesso!`, payload: rsjovem });
+                    });
                 });
+
+
+                
+
         });
 });
      
