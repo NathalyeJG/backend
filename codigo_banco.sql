@@ -97,8 +97,3 @@ ADD CONSTRAINT `fk_idoso_pk_endereco`
 FOREIGN KEY idoso(`id_endereco`)
 REFERENCES endereco(`id_endereco`);
 
--- relacionar a tabela avaliação com a tabela agendamento
-ALTER TABLE avaliacao
-ADD CONSTRAINT `fk_avalicao_pk_agendamento` 
-FOREIGN KEY avaliacao(`id_agendamento`)
-REFERENCES agendamento(`id_agendamento`);

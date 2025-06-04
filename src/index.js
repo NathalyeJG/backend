@@ -228,6 +228,7 @@ app.post('/jovem/cadastrar', upload.single('foto_jovem'), (req, res) => {
                             console.error("Erro ao cadastrar jovem:", er);
                             return res.status(500).send({ erro: `Erro ao tentar cadastrar jovem: ${er.message}` });
                         }
+                        console.log("Objeto do jovem recém-cadastrado:", rsjovem);
                         res.status(201).send({ msg: `Jovem cadastrado com sucesso!`, payload: rsjovem });
                     });
                 });
@@ -311,11 +312,13 @@ app.post('/idoso/cadastrar', upload.single('foto_idoso'), (req,res)=>{
     const genero_db = (genero === 'true' || genero === true || genero === 1) ? 1 : 0; // Se genero for BOOLEAN. Se for STRING, remova esta linha e use 'genero' direto
 
     // Log para depuração:
-    console.log(`[IDOSO BACKEND] ID do usuário recebido: ${id_usuario}`);
-    console.log(`[IDOSO BACKEND] Caminho da foto para o DB: ${foto_idoso_path}`);
-    console.log(`[IDOSO BACKEND] Dados do corpo da requisição:`, req.body);
+    // console.log(`[IDOSO BACKEND] ID do usuário recebido: ${id_usuario}`);
+    // console.log(`[IDOSO BACKEND] Caminho da foto para o DB: ${foto_idoso_path}`);
+    // console.log(`[IDOSO BACKEND] Dados do corpo da requisição:`, req.body);
 
     let id_endereco = 0;
+    let id_idoso = 0;
+
 
     // 4. Inserir Endereço Primeiro
     dbConfig.query("INSERT INTO endereco(logradouro, logradouro_nome, numero, complemento, cidade, estado, bairro, cep, pais) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
@@ -338,7 +341,17 @@ app.post('/idoso/cadastrar', upload.single('foto_idoso'), (req,res)=>{
                         console.error("ERRO ao CADASTRAR IDOSO:", er);
                         return res.status(500).send({ erro: `Erro ao tentar cadastrar idoso: ${er.message}` });
                     }
-                    res.status(201).send({ msg: `Idoso cadastrado com sucesso!`, payload: rs });
+                    id_idoso = rs.insertId
+                     //res.status(201).send({ msg: `idoso cadastrado com sucesso!`, payload: rs });
+                    dbConfig.query("select * from idoso where id_idoso = ?",
+                        id_idoso, (er, rsidoso) => {
+                        if (er) {
+                            console.error("Erro ao cadastrar idoso:", er);
+                            return res.status(500).send({ erro: `Erro ao tentar cadastrar idoso: ${er.message}` });
+                        }
+                        console.log("Objeto do idoso recém-cadastrado:", rsidoso);
+                        res.status(201).send({ msg: `idoso cadastrado com sucesso!`, payload: rsidoso });
+                        });
                 });
         });
 });
