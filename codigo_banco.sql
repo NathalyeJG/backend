@@ -5,7 +5,7 @@ id_usuario INT AUTO_INCREMENT PRIMARY KEY,
 email VARCHAR(50) NOT NULL,
 nome_completo VARCHAR(80) NOT NULL,
 nome_usuario VARCHAR(25) NOT NULL,
-senha VARCHAR(15) NOT NULL,
+senha VARCHAR(255) NOT NULL,
 tipo_usuario BOOLEAN NOT NULL);
  
  
@@ -30,7 +30,7 @@ id_jovem INT AUTO_INCREMENT PRIMARY KEY,
 id_usuario INT NOT NULL,
 id_endereco INT NOT NULL,
 cpf_jovem VARCHAR(14) UNIQUE NOT NULL,
-valor_jovem DECIMAL(4,2),
+valor_jovem varchar(20),
 foto_jovem varchar(255),
 assinante_jovem BOOLEAN NOT NULL,
 data_nascimento_jovem DATE NOT NULL,
@@ -73,17 +73,7 @@ CREATE TABLE mensagens (
 );
 
 
--- relacionar a tabela agendamento com a tabela jovem
-ALTER TABLE agendamento
-ADD CONSTRAINT `fk_agendamento_pk_jovem` 
-FOREIGN KEY agendamento(`id_jovem`)
-REFERENCES jovem(`id_jovem`);
--- relacionar a tabela agendamento com a tabela idoso
-ALTER TABLE agendamento
-ADD CONSTRAINT `fk_agendamento_pk_idoso` 
-FOREIGN KEY agendamento(`id_idoso`)
-REFERENCES idoso(`id_idoso`);
- 
+
 
 -- relacionar a tabela jovem com a tabela usuario
 ALTER TABLE jovem

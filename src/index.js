@@ -39,61 +39,7 @@ app.use(cors())
 
 app.use('/uploads', express.static('uploads'));
 
-/////////////////////////////////////////////TABELA-AVALIAÇÃO/////////////////////////////////////////////////////////////////////////////////
 
-// primeira rota para listar os dados do banco
-app.get("/listar/avaliacao",(req,res)=>{
-    //usar o comando select para listar todos os clientes
-     
-        dbConfig.query("Select * from avaliacao",(error,result)=>{
-            if(error){
-                res.status(500)
-                .send({erro:`Erro ao tentar listar os avaliacao ${error}`})
-            }
-            res.status(200).send({msg:result});
-        })
-     
-    });
-    //Segunda rota para receber os dados enviados pelo usuario
-    app.post("/cadastrar/avaliacao",(req,res)=>{
-     
-        dbConfig.query("insert into avaliacao set ?",req.body,(error,result)=>{
-     
-            if(error){
-                return res.status(500).send({erro:`erro ao tentar cadastrar avalicao ${error}`})
-            }
-        res.status(201).send({msg:`avaliacao cadastrado`,payload:result});
-        })
-     
-    });
-     
-    //Terceira rota para receber os dados e atualizar
-    app.put("/avaliacao/atualizar/:id",(req,res)=>{
-       
-        dbConfig.query("update avaliacao set ? where id=?",[req.body, req.params.id],(error,result)=>{
-     
-            if(error){
-                return res.status(500).send({erro:`erro ao tentar atualizar ${error}`})
-            }
-       
-       
-        res.status(200).send({msg:`Dados atualizados`,payload:result});
-        })
-    });
-     
-    // Quarta rota para receber um id e apagar um dados
-    app.delete("/avaliacao/apagar/:id",(req,res)=>{
-     
-     
-        dbConfig.query("/avaliacao/delete from avaliacao where id=?",req.params.id,(error,result)=>{
-     
-            if(error){
-                return res.status(500).send({erro:`erro ao tentar deletar ${error}`})
-            }
-            res.status(204).send({msg:`Dados atualizados`,payload:result});
-        })
-    });
-    
     ///////////////////////////////////////////////////////TABELA-ENDEREÇO/////////////////////////////////////////////////////////////////
 
     // primeira rota para listar os dados do banco
