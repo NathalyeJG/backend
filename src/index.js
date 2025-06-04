@@ -10,6 +10,7 @@ const cors = require("cors");
 const path = require('path'); // Para trabalhar com caminhos de arquivo
 
 
+console.log(express.static(path.join(__dirname, 'uploads')));
  
  
 //fazer conexao com o banco mysql
@@ -36,7 +37,7 @@ app.use(express.json());
  
 app.use(cors())
 
-
+app.use('/uploads', express.static('uploads'));
 
 /////////////////////////////////////////////TABELA-AVALIAÇÃO/////////////////////////////////////////////////////////////////////////////////
 
@@ -203,6 +204,20 @@ const upload = multer({
         fileSize: 1024 * 1024 * 5 // Limite de 5MB por arquivo
     }
 });
+
+
+// ** ADICIONE ESTA LINHA PARA DEPURAR **
+// A VÍRGULA E OS DOIS PONTOS ('..') INDICAM PARA SUBIR UM NÍVEL NO DIRETÓRIO
+const uploadsPath = path.join(__dirname, '..', 'uploads');
+console.log(`[DEBUG] express.static está servindo de: ${uploadsPath}`);
+
+
+// ** FIM DA ADIÇÃO *
+
+// --- Servir arquivos estáticos (Imagens Uploaded) ---
+// Isso permite que as imagens na pasta 'uploads' sejam acessíveis via URL
+// Ex: http://localhost:3000/uploads/nome_da_minha_foto.jpg
+app.use('/uploads', express.static(uploadsPath));
 
 // --- Rota de Upload e Cadastro de Jovem ---
 
@@ -517,8 +532,7 @@ app.get("/idoso/perfil_idoso/:id", (req, res) => {
     FROM idoso 
     INNER JOIN usuario ON idoso.id_usuario = usuario.id_usuario 
     where idoso.id_idoso=?
-    ORDER BY idoso.id_idoso DESC 
-    LIMIT 10
+   
   `;
   
   dbConfig.query(sql, req.params.id, (error, result) => {
@@ -559,8 +573,6 @@ app.get("/jovem/perfil_jovem/:id", (req, res) => {
       FROM jovem 
       INNER JOIN usuario ON jovem.id_usuario = usuario.id_usuario 
       where jovem.id_jovem=?
-      ORDER BY jovem.id_jovem DESC 
-      LIMIT 10
     `;
     
     dbConfig.query(sql, req.params.id, (error, result) => {
