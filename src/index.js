@@ -596,76 +596,98 @@ app.get("/idoso/:id", (req, res) => {
   
 
 
-//     // \\\\\\\\\\\\\\\\\\\\\\\\\\     teste server msg   \\\\\\\\\\\\\\\\\\\\\\
+//     ####################################     teste update msg #########################################
 
+// No seu arquivo src/index.js (ou onde suas rotas são definidas)
 
+// ... (seus imports e configurações iniciais, como app, dbConfig, upload) ...
 
-    // \\\\\\\\\\\\\\\\\\\\\\\\\\     teste server msg   \\\\\\\\\\\\\\\\\\\\\\
-    const { WebSocketServer } = require("ws")
-    const dotenv = require("dotenv")
-    
-    dotenv.config()
+// Rota para buscar o perfil COMPLETO de um Jovem pelo id_usuario
+app.get('/jovem/perfil_completo/:id_usuario', (req, res) => {
+    const id_usuario = req.params.id_usuario;
 
-// Cria um novo servidor WebSocket na porta definida no .env ou 8080
-const wss = new WebSocketServer({ port: process.env.PORT || 8080 });
+    const query = `
+        SELECT
+            u.id_usuario, u.email, u.nome_completo, u.nome_usuario, u.tipo_usuario,
+            j.id_jovem, j.cpf_jovem, j.valor_jovem, j.foto_jovem, j.assinante_jovem,
+            j.data_nascimento_jovem, j.experiencia_jovem, j.descricao_jovem,
+            j.telefone_jovem, j.genero_jovem,
+            e.id_endereco, e.logradouro, e.logradouro_nome, e.numero, e.complemento,
+            e.cidade, e.estado, e.bairro, e.cep, e.pais
+        FROM
+            usuario u
+        JOIN
+            jovem j ON u.id_usuario = j.id_usuario
+        JOIN
+            endereco e ON j.id_endereco = e.id_endereco
+        WHERE
+            u.id_usuario = ?;
+    `;
 
-// Cria um mapa para armazenar conexões ativas por ID de usuário
-const conexoes = new Map();
-
-// Evento: quando um cliente se conecta
-wss.on("connection", (ws) => {
-  // Exibe erro no console caso ocorra
-  ws.on("error", console.error);
-
-  // Evento: quando o cliente envia uma mensagem
-  ws.on("message", (data) => {
-    const msg = JSON.parse(data); // converte a mensagem recebida de string para objeto
-
-    // Se o tipo da mensagem for "login", salva o ID na conexão e armazena no mapa
-    if (msg.tipo === "login") {
-      ws.id_usuario = msg.id;
-      conexoes.set(msg.id, ws);
-      console.log(`Usuário ${msg.id} conectado`);
-      return;
-    }
-
-    // Se for uma mensagem de chat
-    if (msg.tipo === "mensagem") {
-      const { de, para, texto } = msg;
-
-      // Salva a mensagem no banco de dados
-      const sql = "INSERT INTO mensagens (id_de, id_para, texto) VALUES (?, ?, ?)";
-      dbConfig.query(sql, [de, para, texto], (err, results) => {
-        if (err) return console.error("Erro ao salvar mensagem:", err);
-        console.log("Mensagem salva no banco");
-      });
-
-      // Se o destinatário estiver conectado, envia a mensagem para ele
-      const wsDestino = conexoes.get(para);
-      if (wsDestino) {
-        wsDestino.send(JSON.stringify({
-          de,
-          texto
-        }));
-      }
-    }
-  });
-
-  // Evento: quando a conexão é encerrada, remove do mapa
-  ws.on("close", () => {
-    if (ws.id_usuario) {
-      conexoes.delete(ws.id_usuario);
-      console.log(`Usuário ${ws.id_usuario} desconectado`);
-    }
-  });
-
-  console.log("Cliente conectado");
-
-
-
-
-
-
+    dbConfig.query(query, [id_usuario], (err, results) => {
+        if (err) {
+            console.error("Erro ao buscar perfil completo do jovem:", err);
+            return res.status(500).send({ erro: `Erro ao buscar perfil do jovem: ${err.message}` });
+        }
+        if (results.length === 0) {
+            return res.status(404).send({ msg: "Perfil de jovem não encontrado para este usuário." });
+        }
+        res.status(200).send({ msg: "Perfil de jovem encontrado.", payload: results[0] });
+    });
 });
+
+// Rota para buscar o perfil COMPLETO de um Idoso pelo id_usuario
+app.get('/idoso/perfil_completo/:id_usuario', (req, res) => {
+    const id_usuario = req.params.id_usuario;
+
+    const query = `
+        SELECT
+            u.id_usuario, u.email, u.nome_completo, u.nome_usuario, u.tipo_usuario,
+            i.id_idoso, i.foto_idoso, i.assinante_idoso, i.cpf, i.data_nascimento,
+            i.comorbidade, i.tipo_comorbidade, i.descricao, i.telefone_idoso, i.genero,
+            e.id_endereco, e.logradouro, e.logradouro_nome, e.numero, e.complemento,
+            e.cidade, e.estado, e.bairro, e.cep, e.pais
+        FROM
+            usuario u
+        JOIN
+            idoso i ON u.id_usuario = i.id_usuario
+        JOIN
+            endereco e ON i.id_endereco = e.id_endereco
+        WHERE
+            u.id_usuario = ?;
+    `;
+
+    dbConfig.query(query, [id_usuario], (err, results) => {
+        if (err) {
+            console.error("Erro ao buscar perfil completo do idoso:", err);
+            return res.status(500).send({ erro: `Erro ao buscar perfil do idoso: ${err.message}` });
+        }
+        if (results.length === 0) {
+            return res.status(404).send({ msg: "Perfil de idoso não encontrado para este usuário." });
+        }
+        res.status(200).send({ msg: "Perfil de idoso encontrado.", payload: results[0] });
+    });
+});
+
+// #########################################################################################################
+const { WebSocketServer } = require("ws")
+const dotenv = require("dotenv")
+
+dotenv.config()
+
+const wss = new WebSocketServer({ port: process.env.PORT || 8080 })
+
+wss.on("connection", (ws) => {
+    ws.on("error", console.error)
+
+    ws.on("message", (data) => {
+        wss.clients.forEach((client) => client.send(data.toString()))
+    })
+
+    console.log("client connected")
+})
+
+
+
 app.listen(3000,
     ()=>console.log("Servidor online http://127.0.0.1:3000"))
